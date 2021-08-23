@@ -1,2 +1,2 @@
 # Augmenta-js
-Augmenta javascript librrary
+Augmenta javascript library
