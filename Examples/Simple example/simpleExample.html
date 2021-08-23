@@ -1,0 +1,232 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Augmenta Websocket Simple Example</title>
+</head>
+
+<body>
+
+    <div id="controls">
+        <label><strong>Port:</strong></label>
+        <input type="number" id="port" value="8080" style="height:20px;width:60px" />
+        <button type="button" id="portbutton"> change port </button> <br />
+
+        <label><strong>IP:</strong></label>
+        <input type="number" id="ip1" value="127" style="height:20px;width:50px" />
+        <input type="number" id="ip2" value="0" style="height:20px;width:50px" />
+        <input type="number" id="ip3" value="0" style="height:20px;width:50px" />
+        <input type="number" id="ip4" value="1" style="height:20px;width:50px" />
+        <button type="button" id="ipbutton"> change ip </button> <br />
+
+        <p><strong>Select a display mode:</strong></p>
+        
+        <form name="display mode">
+            <div>
+                <input type="radio" id="oldest" name="mode" value="oldest">
+                <label for="oldest">Oldest Object</label>
+            </div>
+
+            <div>
+                <input type="radio" id="newest" name="mode" value="newest">
+                <label for="newest">Newest Object</label>
+            </div>
+
+            <div>
+                <input type="radio" id="all" name="mode" value="all"
+                       checked>
+                <label for="all">All Objects</label>
+            </div>
+        </form>
+    </div> <br />
+
+    <div id="info">
+        <strong>Status: </strong><span id="connectionstatus">Disconnected</span>
+    </div>
+
+    <canvas id="canvas" width="2000" height="1500"></canvas>
+
+    <script type="module" id="main">
+
+        import { AugmentaManager } from '../../Lib/augmentaManager.js'
+
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+
+        let ip = '127.0.0.1';
+        let port = 8080;
+
+        //set functions
+        let objectUpdatedAll = (augmentaObject) => {
+
+            // clear and redraw all objects
+            ctx.clearRect(0,0,4000,3000);
+
+            // scene properties
+            let sceneWidth = augmentaManager.augmentaScene.scene.y;
+            let sceneHeight = augmentaManager.augmentaScene.scene.x;
+
+            let augmentaObjects = augmentaManager.augmentaObjects;
+
+            for (var oid in augmentaObjects) {
+
+                let object = augmentaObjects[oid];
+                
+                ctx.save();
+                
+                ctx.fillStyle = object.color;
+
+                let x = (object.boundingRect.x / sceneWidth + 0.5) * canvas.width;
+                let y = (object.boundingRect.y / sceneHeight + 0.5) * canvas.height;
+                let w = (object.boundingRect.width / sceneWidth) * canvas.width;
+                let h = (object.boundingRect.height / sceneHeight) * canvas.height;
+                let angle = - object.orientation * Math.PI * 2 / 360;
+
+                ctx.translate(x+w/2,y+h/2);
+                ctx.rotate(angle);
+
+                ctx.fillRect(-w/2,-h/2,w/2,h/2);
+
+                //ctx.fillStyle = '#000000';
+                //ctx.fillText("Id: " + object.id + "\nOid: " + oid, 0,0);
+
+                ctx.restore();
+            }
+        }
+            
+        let objectUpdatedNewest = (augmentaObject) => {
+
+            // clear and redraw
+            ctx.clearRect(0,0,2000,1000);
+            ctx.save();
+
+            // scene properties
+            let sceneWidth = augmentaManager.augmentaScene.scene.y;
+            let sceneHeight = augmentaManager.augmentaScene.scene.x;
+
+            let object = augmentaManager.newestObject;
+
+            ctx.fillStyle = object.color;
+
+            let x = (object.boundingRect.x / sceneWidth + 0.5) * canvas.width;
+            let y = (object.boundingRect.y / sceneHeight + 0.5) * canvas.height;
+            let w = (object.boundingRect.width / sceneWidth) * canvas.width;
+            let h = (object.boundingRect.height / sceneHeight) * canvas.height;
+            let angle = - object.orientation * Math.PI * 2 / 360;
+
+            ctx.translate(x+w/2,y+h/2);
+            ctx.rotate(angle);
+
+            ctx.fillRect(-w/2,-h/2,w/2,h/2);
+            ctx.restore();
+        }
+        
+        let objectUpdatedOldest = (augmentaObject) => {
+
+            // clear and redraw
+            ctx.clearRect(0,0,2000,1000);
+            ctx.save();
+
+            // scene properties
+            let sceneWidth = augmentaManager.augmentaScene.scene.y;
+            let sceneHeight = augmentaManager.augmentaScene.scene.x;
+
+            let object = augmentaManager.oldestObject;
+
+            ctx.fillStyle = object.color;
+
+            let x = (object.boundingRect.x / sceneWidth + 0.5) * canvas.width;
+            let y = (object.boundingRect.y / sceneHeight + 0.5) * canvas.height;
+            let w = (object.boundingRect.width / sceneWidth) * canvas.width;
+            let h = (object.boundingRect.height / sceneHeight) * canvas.height;
+            let angle = - object.orientation * Math.PI * 2 / 360;
+
+            ctx.translate(x+w/2,y+h/2);
+            ctx.rotate(angle);
+
+            ctx.fillRect(-w/2,-h/2,w/2,h/2);
+            ctx.restore();
+        }
+
+        let objectWillLeave = (augmentaObject) => {
+            ctx.clearRect(0,0,2000,1000);
+            console.log('Object left: ' + augmentaObject.oid)
+        }
+
+        //get status element
+	    var connstatus = document.getElementById("connectionstatus");
+
+	    //get info div element
+	    var infodiv = document.getElementById("info");
+
+        let websocketOpened = () => {
+            connstatus.innerHTML = "Connected!";
+        }
+            
+        let websocketClosed = () => {
+            connstatus.innerHTML = "Disconnected";
+            ctx.clearRect(0,0,2000,1000);
+        }
+        
+        // Augmenta Manager 
+
+        //Initialize augmenta manager 
+        let augmentaManager = new AugmentaManager();
+
+        //Set functions
+        augmentaManager.setObjectUpdated(objectUpdatedAll);
+        augmentaManager.setObjectWillLeave(objectWillLeave);
+        augmentaManager.setWebsocketOpened(websocketOpened);
+        augmentaManager.setWebsocketClosed(websocketClosed);
+
+        //Set TimeOut
+        augmentaManager.timeOut = 40;
+            
+        //Start websocket connection
+        augmentaManager.startAugmentaWebsocket();
+
+        //Controls
+
+        function changePort() {
+
+            ctx.clearRect(0,0,2000,1000);
+
+            port = document.getElementById("port").value;
+        	
+            augmentaManager.changePort(port);
+
+        }
+        document.getElementById('portbutton').addEventListener('click', changePort)
+
+        function changeIP() {
+
+            ctx.clearRect(0,0,2000,1000);
+
+            ip = document.getElementById("ip1").value + '.' + document.getElementById("ip2").value + '.' + document.getElementById("ip3").value + '.' +document.getElementById("ip4").value;
+        	
+            augmentaManager.changeIP(ip);  
+
+        }
+        document.getElementById('ipbutton').addEventListener('click', changeIP)
+
+        var radios = document.forms["display mode"].elements["mode"];
+        for(var i = 0, max = 3; i < max; i++) {
+            radios[i].onclick = function() {
+                let displayMode = this.value;
+                console.log(displayMode);
+                if(displayMode == "all") {
+                    augmentaManager.setObjectUpdated(objectUpdatedAll);
+                } else if(displayMode == "oldest") {
+                    augmentaManager.setObjectUpdated(objectUpdatedOldest);
+                } else if(displayMode == "newest") {
+                    augmentaManager.setObjectUpdated(objectUpdatedNewest);
+                }
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>
