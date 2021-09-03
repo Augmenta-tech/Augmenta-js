@@ -7,7 +7,7 @@ import { Fusion } from './fusion.js';
 *
 * AugmentaManager : connects to a given websocket address, receives and parses websockect messages sent
 * Easy acces to all useful info sent by augmentaFusion
-* - augmenta objects stored in a dictionary (key: oid, value: augmentaObject)
+* - augmenta objects stored in a dictionary (key: id, value: augmentaObject)
 * - augmenta scene
 * - fusion
 *
@@ -42,6 +42,9 @@ class AugmentaManager {
 	//Websocket connections functions
 	#_websocketOpened;
 	#_websocketClosed;
+
+	//Fusion Event function
+	#_fusionUpdated;
 
 	constructor() {
 
@@ -78,6 +81,11 @@ class AugmentaManager {
 		this.#_websocketClosed = () => {
 			console.log('disconnected')
 		}
+
+		//Default fusion event Function
+		this.#_fusionUpdated = (fusion) => {
+			console.log("Fusion's info updated")
+		}
 	}
 
 	/**
@@ -104,7 +112,7 @@ class AugmentaManager {
 				this.#_websocketClosed();
 				this.#_timerId = setInterval(() => {
 					console.log("trying to connect to " + this.#_websocketurl);
-					this.startAugmentaWebsocket(this.#_websocketurl);
+					this.startAugmentaWebsocket();
 				}, 10000);
 			};
 		}
@@ -132,9 +140,11 @@ class AugmentaManager {
 
 				if(this.#_fusion !== undefined) {
 					this.#_fusion.updateFusion(message);
+					this.#_fusionUpdated(this.#_fusion);
 				} else {
 					this.#_fusion = new Fusion();
 					this.#_fusion.updateFusion(message);
+					this.#_fusionUpdated(this.#_fusion);
 				}
 
 			}
@@ -145,35 +155,35 @@ class AugmentaManager {
 
 				if(message.data.charAt(15) == 'e') { //enter
 
-					let oid = msg.object.enter.oid;
+					let id = msg.object.enter.id;
 
-					this.#_augmentaObjects[oid] = new AugmentaObject();
-					this.#_augmentaObjects[oid].initializeAugmentaObject(message);
-					this.#_objectEntered(this.#_augmentaObjects[oid]);
-					this.#_augmentaObjects[oid].lastSeen = this.#_augmentaScene.frame;
+					this.#_augmentaObjects[id] = new AugmentaObject();
+					this.#_augmentaObjects[id].initializeAugmentaObject(message);
+					this.#_objectEntered(this.#_augmentaObjects[id]);
+					this.#_augmentaObjects[id].lastSeen = this.#_augmentaScene.frame;
 				
 				} else if(message.data.charAt(15) == 'u') { //update
 
-					let oid = msg.object.update.oid;
+					let id = msg.object.update.id;
 
-					if(this.#_augmentaObjects[oid] !== undefined) {
-						this.#_augmentaObjects[oid].updateAugmentaObject(message);
-						this.#_objectUpdated(this.#_augmentaObjects[oid]);
-						this.#_augmentaObjects[oid].lastSeen = this.#_augmentaScene.frame;
+					if(this.#_augmentaObjects[id] !== undefined) {
+						this.#_augmentaObjects[id].updateAugmentaObject(message);
+						this.#_objectUpdated(this.#_augmentaObjects[id]);
+						this.#_augmentaObjects[id].lastSeen = this.#_augmentaScene.frame;
 					} else {
-						this.#_augmentaObjects[oid] = new AugmentaObject();
-						this.#_augmentaObjects[oid].updateAugmentaObject(message);
-						this.#_objectEntered(this.#_augmentaObjects[oid]);
-						this.#_augmentaObjects[oid].lastSeen = this.#_augmentaScene.frame;
+						this.#_augmentaObjects[id] = new AugmentaObject();
+						this.#_augmentaObjects[id].updateAugmentaObject(message);
+						this.#_objectEntered(this.#_augmentaObjects[id]);
+						this.#_augmentaObjects[id].lastSeen = this.#_augmentaScene.frame;
 					}
 
 				} else if(message.data.charAt(15) == 'l') { //leave
 					
-					let oid = msg.object.leave.oid;
+					let id = msg.object.leave.id;
 
-					if(this.#_augmentaObjects[oid] !== undefined) {
-						this.#_objectWillLeave(this.#_augmentaObjects[oid]);
-						delete this.#_augmentaObjects[oid];
+					if(this.#_augmentaObjects[id] !== undefined) {
+						this.#_objectWillLeave(this.#_augmentaObjects[id]);
+						delete this.#_augmentaObjects[id];
 					}
 				}
 			}
@@ -188,6 +198,7 @@ class AugmentaManager {
 	* - objectWillLeave : when an object leaves the scene
 	* - websockectOpened : when a websocket connection has succesfully been made
 	* - websocketClosed : when a websocket connection is closed
+	* - fusionUpdated : offset, bounds...
 	*/
 
 	setObjectEntered (objectEntered) {
@@ -230,6 +241,14 @@ class AugmentaManager {
 		}
 	}
 
+	setFusionUpdated (fusionUpdated){
+		if (fusionUpdated && {}.toString.call(fusionUpdated) === '[object Function]') {
+			this.#_fusionUpdated = fusionUpdated;
+		} else {
+			console.log("must provide a function as setFusionUpdated's argument");
+		}
+	}
+
 	/**
 	* to get fusion pixel's density in width and height
 	*/
@@ -240,15 +259,15 @@ class AugmentaManager {
 
 	/**
 	* To get an object relative position in the scene 
-	* @param oid
+	* @param id
 	*/
-	getObjectRelativePosition(oid) {
+	getObjectRelativePosition(id) {
 
 		let sceneWidth = this.#_augmentaScene.scene.x;
 		let sceneHeight = this.#_augmentaScene.scene.y;
 
-		let posX = this.#_augmentaObjects[oid].centroid.x / sceneWidth + 0.5;
-		let posY = this.#_augmentaObjects[oid].centroid.y / sceneHeight + 0.5;
+		let posX = this.#_augmentaObjects[id].centroid.x / sceneWidth + 0.5;
+		let posY = this.#_augmentaObjects[id].centroid.y / sceneHeight + 0.5;
 
 		return (posX,posY);
 	}
@@ -269,8 +288,8 @@ class AugmentaManager {
 	* Gives access to augmentaObjects
 	*
 	* Returns a dictionary containing all augmenta objects 
-	* key: oid of the augmenta object
-	* value: augmenta object corresponding to this oid
+	* key: id of the augmenta object
+	* value: augmenta object corresponding to this id
 	*
 	*/
 	get augmentaObjects() {
@@ -286,18 +305,18 @@ class AugmentaManager {
 			console.log('No object in scene')
 		} else {
 
-			var minOid = Object.keys(this.#_augmentaObjects)[0];
-			var minAge = this.#_augmentaObjects[minOid].age;
+			var minId = Object.keys(this.#_augmentaObjects)[0];
+			var minAge = this.#_augmentaObjects[minId].age;
 
-			for(var oid in this.#_augmentaObjects) {
+			for(var id in this.#_augmentaObjects) {
 				
-				if(this.#_augmentaObjects[oid].age <= minAge && oid > minOid) {
-					minAge = this.#_augmentaObjects[oid].age;
-					minOid = oid;
+				if(this.#_augmentaObjects[id].age <= minAge && id > minId) {
+					minAge = this.#_augmentaObjects[id].age;
+					minId = id;
 				}
 			}
 
-			return this.#_augmentaObjects[minOid];
+			return this.#_augmentaObjects[minId];
 		}
 	}
 
@@ -311,16 +330,16 @@ class AugmentaManager {
 		} else {
 
 			let maxAge = -1;
-			let maxOid;
+			let maxId;
 
-			for(var oid in this.#_augmentaObjects) {
-				if(this.#_augmentaObjects[oid].age > maxAge) {
-					maxAge = this.#_augmentaObjects[oid].age;
-					maxOid = oid;
+			for(var id in this.#_augmentaObjects) {
+				if(this.#_augmentaObjects[id].age > maxAge) {
+					maxAge = this.#_augmentaObjects[id].age;
+					maxId = id;
 				}
 			}
 
-			return this.#_augmentaObjects[maxOid]
+			return this.#_augmentaObjects[maxId]
 		}
 
 	}
@@ -403,7 +422,7 @@ class AugmentaManager {
 			setTimeout(this.startAugmentaWebsocket(), 1000);
 
 		} else {
-			console.log("ip must be a string")
+			console.log("websocketurl must be a string")
 		}
 	}
 
@@ -414,13 +433,13 @@ class AugmentaManager {
 
 		let currentFrame = this.#_augmentaScene.frame;
 
-		for(var oid in this.#_augmentaObjects) {
+		for(var id in this.#_augmentaObjects) {
 			
-			let object = this.#_augmentaObjects[oid];
+			let object = this.#_augmentaObjects[id];
 
 			if (currentFrame - object.lastSeen > this.#_augmentaObjectTimeOut) {
-				this.#_objectWillLeave(this.#_augmentaObjects[oid]);
-				delete this.#_augmentaObjects[oid];						
+				this.#_objectWillLeave(this.#_augmentaObjects[id]);
+				delete this.#_augmentaObjects[id];						
 			}
 		}
 	}

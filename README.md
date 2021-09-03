@@ -69,7 +69,7 @@ The current augmenta scene of class ```AugmentaScene```.
 - ```fusion```  
 An instance of class ```Fusion``` storing fusion's informations.  
   
-For instances of class ```AugmentaObject``` you can access : 
+For instances of class ```AugmentaObject``` you can access: 
 - ```frame```
 - ```id```
 - ```oid```
@@ -81,13 +81,24 @@ For instances of class ```AugmentaObject``` you can access :
 - ```height```
   
 - ```lastSeen``` the scene's frame it was last seen in
-  
+
 - ```color``` (for display purposes only)
+
+If extra data are also sent you can also access:
+
+- ```highest``` the position of the highest point (of class ```vec2```)
+- ```distance```
+- ```reflectivity```
   
-For instances of class ```AugmentaScene``` you can access :
+For instances of class ```AugmentaScene``` you can access:
 - ```frame```
 - ```objectCount```
 - ```scene``` (of class ```vec2```)  
+
+For instances of class ```Fusion``` you can access:
+- ```offset``` the output offset in pixels (of class ```vec2```)
+- ```videoOut``` the size of the video output in meters (of class ```vec2```)
+- ```videoOutInPixels``` the size of the video output in pixels (of class ```vec2```)
   
 Other informations you might need :
   

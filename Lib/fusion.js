@@ -13,7 +13,7 @@ class Fusion {
 
 	constructor() {}
 
-	// Parses received message and update fusion's info
+	// Parses received message and updates fusion's info
 	updateFusion(message) {
 		let msg = JSON.parse(message.data);
 
@@ -23,13 +23,13 @@ class Fusion {
 
 	}
 
-	get textureOffset () {
+	get offset () {
 		return this.#_textureOffset;
 	}
-	get textureBounds () {
+	get videoOut () {
 		return this.#_textureBounds;
 	}
-	get targetOutSize () {
+	get videoOutInPixels () {
 		return this.#_targetOutSize;
 	}
 };

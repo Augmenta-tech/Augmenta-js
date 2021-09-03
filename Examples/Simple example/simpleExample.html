@@ -3,25 +3,42 @@
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="utf-8" />
+
     <title>Augmenta Websocket Simple Example</title>
+
+    <style type="text/css">
+        .brsmall {
+            display: block;
+            margin-bottom: 0.5em;
+        }
+
+    </style>
+
 </head>
 
 <body>
 
     <div id="controls">
-        <label><strong>Port:</strong></label>
-        <input type="number" id="port" value="8080" style="height:20px;width:60px" />
-        <button type="button" id="portbutton"> change port </button> <br />
 
         <label><strong>IP:</strong></label>
         <input type="number" id="ip1" value="127" style="height:20px;width:50px" />
         <input type="number" id="ip2" value="0" style="height:20px;width:50px" />
         <input type="number" id="ip3" value="0" style="height:20px;width:50px" />
         <input type="number" id="ip4" value="1" style="height:20px;width:50px" />
-        <button type="button" id="ipbutton"> change ip </button> <br />
+        <button type="button" id="ipbutton"> apply </button> 
 
-        <p><strong>Select a display mode:</strong></p>
-        
+        <label><strong>Port:</strong></label>
+        <input type="number" id="port" value="8080" style="height:20px;width:60px" />
+        <button type="button" id="portbutton"> apply </button>
+
+        <div id="info">
+            <strong>Status: </strong><span id="connectionstatus">Disconnected</span>
+        </div>
+
+        <span class="brsmall"></span>
+
+        <strong>Select a display mode:</strong>
+
         <form name="display mode">
             <div>
                 <input type="radio" id="oldest" name="mode" value="oldest">
@@ -39,139 +56,108 @@
                 <label for="all">All Objects</label>
             </div>
         </form>
-    </div> <br />
 
-    <div id="info">
-        <strong>Status: </strong><span id="connectionstatus">Disconnected</span>
+        <span class="brsmall"></span>
+
+        <div>
+            <input type="checkbox" id="fusion output" name="fusion output">
+            <label for="fusion output"> <strong> Fusion output </strong> </label> 
+        </div> 
+
+        <span class="brsmall"></span>
+        
+        <div>
+            <input type="checkbox" id="manual output" name="manual output">
+            <label for="manual output"> <strong> Manual output : </strong> </label> 
+
+            <label>Size : </label>
+            <input type="number" id="width" value="1920" style="height:20px;width:50px" />
+            <input type="number" id="height" value="1080" style="height:20px;width:50px" />
+
+            <label>Offset : </label>
+            <input type="number" id="offsetX" value="0" style="height:20px;width:50px" />
+            <input type="number" id="offsetY" value="0" style="height:20px;width:50px" />
+
+            <button type="button" id="apply"> apply </button>
+
+        </div>      
     </div>
 
-    <canvas id="canvas" width="2000" height="1500"></canvas>
+    <span class="brsmall"></span>
+
+    <canvas id="canvas" width="800" height="575"></canvas>
 
     <script type="module" id="main">
 
         import { AugmentaManager } from '../../Lib/augmentaManager.js'
 
         var canvas = document.getElementById("canvas");
+        canvas.width = window.innerWidth - 14;
+        canvas.height = window.innerHeight - 215;
+        canvas.style.left = "7px";
+        canvas.style.top = "205px";
         var ctx = canvas.getContext("2d");
 
         let ip = '127.0.0.1';
         let port = 8080;
+        let isConnected = false; // Websocket connection's status
+
+        let fusionOutput = false;
+        let manualOutput = false;
+
+        let manualWidth, manualHeight;
+        let manualOffsetX, manualOffsetY;
 
         //set functions
         let objectUpdatedAll = (augmentaObject) => {
 
-            // clear and redraw all objects
-            ctx.clearRect(0,0,4000,3000);
-
-            // scene properties
-            let sceneWidth = augmentaManager.augmentaScene.scene.y;
-            let sceneHeight = augmentaManager.augmentaScene.scene.x;
+            drawBackground();
 
             let augmentaObjects = augmentaManager.augmentaObjects;
 
-            for (var oid in augmentaObjects) {
-
-                let object = augmentaObjects[oid];
-                
-                ctx.save();
-                
-                ctx.fillStyle = object.color;
-
-                let x = (object.boundingRect.x / sceneWidth + 0.5) * canvas.width;
-                let y = (object.boundingRect.y / sceneHeight + 0.5) * canvas.height;
-                let w = (object.boundingRect.width / sceneWidth) * canvas.width;
-                let h = (object.boundingRect.height / sceneHeight) * canvas.height;
-                let angle = - object.orientation * Math.PI * 2 / 360;
-
-                ctx.translate(x+w/2,y+h/2);
-                ctx.rotate(angle);
-
-                ctx.fillRect(-w/2,-h/2,w/2,h/2);
-
-                //ctx.fillStyle = '#000000';
-                //ctx.fillText("Id: " + object.id + "\nOid: " + oid, 0,0);
-
-                ctx.restore();
+            for (var id in augmentaObjects) {
+                drawObjectDebug(augmentaObjects[id]);
             }
         }
-            
+
         let objectUpdatedNewest = (augmentaObject) => {
-
-            // clear and redraw
-            ctx.clearRect(0,0,2000,1000);
-            ctx.save();
-
-            // scene properties
-            let sceneWidth = augmentaManager.augmentaScene.scene.y;
-            let sceneHeight = augmentaManager.augmentaScene.scene.x;
-
-            let object = augmentaManager.newestObject;
-
-            ctx.fillStyle = object.color;
-
-            let x = (object.boundingRect.x / sceneWidth + 0.5) * canvas.width;
-            let y = (object.boundingRect.y / sceneHeight + 0.5) * canvas.height;
-            let w = (object.boundingRect.width / sceneWidth) * canvas.width;
-            let h = (object.boundingRect.height / sceneHeight) * canvas.height;
-            let angle = - object.orientation * Math.PI * 2 / 360;
-
-            ctx.translate(x+w/2,y+h/2);
-            ctx.rotate(angle);
-
-            ctx.fillRect(-w/2,-h/2,w/2,h/2);
-            ctx.restore();
+            drawBackground();
+            drawObjectDebug(augmentaManager.newestObject);
         }
-        
+
         let objectUpdatedOldest = (augmentaObject) => {
-
-            // clear and redraw
-            ctx.clearRect(0,0,2000,1000);
-            ctx.save();
-
-            // scene properties
-            let sceneWidth = augmentaManager.augmentaScene.scene.y;
-            let sceneHeight = augmentaManager.augmentaScene.scene.x;
-
-            let object = augmentaManager.oldestObject;
-
-            ctx.fillStyle = object.color;
-
-            let x = (object.boundingRect.x / sceneWidth + 0.5) * canvas.width;
-            let y = (object.boundingRect.y / sceneHeight + 0.5) * canvas.height;
-            let w = (object.boundingRect.width / sceneWidth) * canvas.width;
-            let h = (object.boundingRect.height / sceneHeight) * canvas.height;
-            let angle = - object.orientation * Math.PI * 2 / 360;
-
-            ctx.translate(x+w/2,y+h/2);
-            ctx.rotate(angle);
-
-            ctx.fillRect(-w/2,-h/2,w/2,h/2);
-            ctx.restore();
+            drawBackground();
+            drawObjectDebug(augmentaManager.oldestObject);
         }
 
         let objectWillLeave = (augmentaObject) => {
             ctx.clearRect(0,0,2000,1000);
-            console.log('Object left: ' + augmentaObject.oid)
         }
 
         //get status element
-	    var connstatus = document.getElementById("connectionstatus");
+        var connstatus = document.getElementById("connectionstatus");
 
-	    //get info div element
-	    var infodiv = document.getElementById("info");
+        //get info div element
+        var infodiv = document.getElementById("info");
 
         let websocketOpened = () => {
+            isConnected = true;
             connstatus.innerHTML = "Connected!";
         }
-            
-        let websocketClosed = () => {
-            connstatus.innerHTML = "Disconnected";
-            ctx.clearRect(0,0,2000,1000);
-        }
-        
-        // Augmenta Manager 
 
-        //Initialize augmenta manager 
+        let websocketClosed = () => {
+            isConnected = false;
+            connstatus.innerHTML = "Disconnected";
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+        }
+
+        let fusionUpdated = () => {
+
+        }
+
+        // Augmenta Manager
+
+        //Initialize augmenta manager
         let augmentaManager = new AugmentaManager();
 
         //Set functions
@@ -182,18 +168,51 @@
 
         //Set TimeOut
         augmentaManager.timeOut = 40;
-            
+
         //Start websocket connection
         augmentaManager.startAugmentaWebsocket();
+
+        window.addEventListener( 'resize', onWindowResize );
+
+        function onWindowResize () {
+
+            if (!fusionOutput && !manualOutput) {
+
+                canvas.width = window.innerWidth - 14;
+                canvas.height = window.innerHeight - 215;
+                canvas.style.left = "7px";
+                canvas.style.top = "205px";
+            }
+        }
+
+        document.addEventListener('keydown', onKeyDown);
+
+        function onKeyDown(e) {
+
+            if(e.key == "q" && event.ctrlKey && (fusionOutput || manualOutput)) {
+
+                fusionOutput = false; 
+                manualOutput = false;
+
+                document.getElementById("fusion output").checked = false;
+                document.getElementById("manual output").checked = false;
+
+                console.log("quit output mode")
+                canvas.width = window.innerWidth - 14;
+                canvas.height = window.innerHeight - 215;
+                canvas.style.left = "7px";
+                canvas.style.top = "205px";
+            }
+        }
 
         //Controls
 
         function changePort() {
 
-            ctx.clearRect(0,0,2000,1000);
+            ctx.clearRect(0,0,canvas.width,canvas.height);
 
             port = document.getElementById("port").value;
-        	
+
             augmentaManager.changePort(port);
 
         }
@@ -201,11 +220,11 @@
 
         function changeIP() {
 
-            ctx.clearRect(0,0,2000,1000);
+            ctx.clearRect(0,0,canvas.width,canvas.height);
 
             ip = document.getElementById("ip1").value + '.' + document.getElementById("ip2").value + '.' + document.getElementById("ip3").value + '.' +document.getElementById("ip4").value;
-        	
-            augmentaManager.changeIP(ip);  
+
+            augmentaManager.changeIP(ip);
 
         }
         document.getElementById('ipbutton').addEventListener('click', changeIP)
@@ -223,6 +242,165 @@
                     augmentaManager.setObjectUpdated(objectUpdatedNewest);
                 }
             }
+        }
+
+        function applyFusionOutput() {
+
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+
+            fusionOutput = document.getElementById("fusion output").checked == true;
+
+            if (fusionOutput) {
+
+                // disable manual output if enabled
+                document.getElementById("manual output").checked = false;
+                manualOutput = false;
+
+                alert("Press ctrl + q to quit fusion output mode")
+
+            }
+            
+            if (fusionOutput && isConnected) {
+              
+                canvas.width = augmentaManager.fusion.videoOutInPixels.x;
+                canvas.height = augmentaManager.fusion.videoOutInPixels.y;
+                canvas.style.left = augmentaManager.fusion.offset.x + 'px';
+                canvas.style.top = augmentaManager.fusion.offset.y + 'px';
+                canvas.style.position = "absolute";
+
+            }
+
+        }
+        document.getElementById('fusion output').addEventListener('click', applyFusionOutput)
+
+        function enableManualOutput() {
+
+            manualOutput = document.getElementById("manual output").checked == true;
+
+            if (manualOutput) {
+
+                // disable fusion output if enabled
+                document.getElementById("fusion output").checked = false;
+                fusionOutput = false;
+
+                alert("Press ctrl + q to quit manual output mode")
+
+            }
+
+            
+        }
+        document.getElementById('manual output').addEventListener('click', enableManualOutput)
+
+        function applyManualOutput() {
+
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+
+            manualWidth = document.getElementById('width').value;
+            manualHeight = document.getElementById('height').value;
+            manualOffsetX = document.getElementById('offsetX').value;
+            manualOffsetY = document.getElementById('offsetY').value;
+
+            console.log(manualWidth)
+
+            if (manualOutput) {
+              
+                canvas.width = manualWidth;
+                canvas.height = manualHeight;
+                canvas.style.left = manualOffsetX + 'px';
+                canvas.style.top = manualOffsetY + 'px';
+                canvas.style.position = "absolute";
+
+            }
+
+        }
+        document.getElementById('apply').addEventListener('click', applyManualOutput)
+
+
+        // Draw function
+        function drawBackground() {
+
+            // clear canvas
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+
+            let dx = canvas.width / augmentaManager.fusion.videoOut.x;
+            let dy = canvas.height / augmentaManager.fusion.videoOut.y;
+
+            // background
+            for (let i = 0; i < canvas.width; i += 2 * dx) {
+                for (let j = 0; j * dy < canvas.height; j+= 1) {
+                    if(j%2 == 0) {
+                        ctx.fillStyle =  "#b5b2b1";
+                        ctx.fillRect(i, j*dy, dx, dy);
+                        ctx.fillStyle =  "#919090";
+                        ctx.fillRect(i + dx, j*dy, dx, dy);
+                    } else {
+                        ctx.fillStyle = "#919090";
+                        ctx.fillRect(i, j*dy, dx, dy);
+                        ctx.fillStyle = "#b5b2b1";
+                        ctx.fillRect(i + dx, j*dy, dx, dy);
+                    }
+                }
+            }
+        }
+
+        function drawObject(object) {
+
+            // scene properties
+            let sceneWidth = augmentaManager.augmentaScene.scene.x;
+            let sceneHeight = augmentaManager.augmentaScene.scene.y;
+
+            ctx.save();
+
+            ctx.fillStyle = object.color;
+
+            let x = object.boundingRect.x * canvas.width;
+            let y = object.boundingRect.y * canvas.height;
+            let w = object.boundingRect.width * canvas.width;
+            let h = object.boundingRect.height * canvas.height;
+            let angle = - object.boundingRect.rotation * Math.PI * 2 / 360;
+
+            ctx.translate(x + w/2,y + h/2);
+            ctx.rotate(angle);
+
+            ctx.fillRect(-w,-h,w,h);
+            ctx.restore();
+
+        }
+
+        function drawObjectDebug (object) {
+
+            // scene properties
+            let sceneWidth = augmentaManager.augmentaScene.scene.x;
+            let sceneHeight = augmentaManager.augmentaScene.scene.y;
+
+            ctx.save();
+
+            let x = object.boundingRect.x * canvas.width;
+            let y = object.boundingRect.y * canvas.height;
+            let w = object.boundingRect.width * canvas.width;
+            let h = object.boundingRect.height * canvas.height;
+            let angle = - object.boundingRect.rotation * Math.PI * 2 / 360;
+
+            ctx.translate(x + w/2,y + h/2);
+            ctx.rotate(angle);
+
+            ctx.globalAlpha = 0.3;
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(-w,-h,w,h);
+
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle=object.color;
+            ctx.lineWidth = 5;
+            ctx.strokeRect(-w,-h,w,h);
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = "bold";
+            ctx.textAlign ="center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("ID: " + object.id + "  OID: " + object.oid, -w/2, -h/2);
+
+            ctx.restore();
+
         }
 
     </script>

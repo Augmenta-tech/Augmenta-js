@@ -22,6 +22,10 @@ class AugmentaObject {
 	#_orientation;
 	#_boundingRect;
 	#_height;
+	//extra
+	#_highest;
+	#_distance;
+	#_reflectivity;
 
 	//For display 
 	#_color;
@@ -35,7 +39,7 @@ class AugmentaObject {
 	#initialize() {
 
 		//Choose a random color 
-		this.#_color = '#'+Math.floor(Math.random()*16777215).toString(16);;
+		this.#_color = '#'+Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
 		this.#_initialized = true;
 
 	}
@@ -59,7 +63,12 @@ class AugmentaObject {
 		this.#_centroid = new vec2(msg.object.update.centroid.x, msg.object.update.centroid.y);
 		this.#_velocity = new vec2(msg.object.update.velocity.x, msg.object.update.velocity.y);
 		this.#_orientation = msg.object.update.orientation;
-		this.#_boundingRect = new BoundingRect(msg.object.update.boundingRect.x, msg.object.update.boundingRect.y, msg.object.update.boundingRect.height, msg.object.update.boundingRect.width);
+		this.#_boundingRect = new BoundingRect(msg.object.update.boundingRect.x, msg.object.update.boundingRect.y, msg.object.update.boundingRect.height, msg.object.update.boundingRect.width, msg.object.update.boundingRect.rotation);
+		this.#_height = msg.object.update.height;
+		// extra
+		this.#_highest = new vec2(msg.object.update.extra.highest.x, msg.object.update.extra.highest.y);
+		this.#_distance = msg.object.update.extra.distance;
+		this.#_reflectivity = msg.object.update.extra.reflectivity;
 
 	}
 
@@ -77,8 +86,12 @@ class AugmentaObject {
 		this.#_centroid = new vec2(msg.object.enter.centroid.x, msg.object.enter.centroid.y);
 		this.#_velocity = new vec2(msg.object.enter.velocity.x, msg.object.enter.velocity.y);
 		this.#_orientation = msg.object.enter.orientation;
-		this.#_boundingRect = new BoundingRect(msg.object.enter.boundingRect.x, msg.object.enter.boundingRect.y, msg.object.enter.boundingRect.height, msg.object.enter.boundingRect.width);
-
+		this.#_boundingRect = new BoundingRect(msg.object.enter.boundingRect.x, msg.object.enter.boundingRect.y, msg.object.enter.boundingRect.height, msg.object.enter.boundingRect.width, msg.object.enter.boundingRect.rotation);
+		this.#_height = msg.object.enter.height;
+		// extra
+		this.#_highest = new vec2(msg.object.enter.extra.highest.x, msg.object.enter.extra.highest.y);
+		this.#_distance = msg.object.enter.extra.distance;
+		this.#_reflectivity = msg.object.enter.extra.reflectivity;
 	}
 
 	//Augmenta info
@@ -108,6 +121,16 @@ class AugmentaObject {
 	}
 	get height () {
 		return this.#_height;
+	}
+	//extra
+	get highest () {
+		return this.#_highest;
+	}
+	get distance () {
+		return this.#_distance;
+	}
+	get reflectivity () {
+		return this.#_reflectivity;
 	}
 
 	//For display 

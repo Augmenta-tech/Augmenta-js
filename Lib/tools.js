@@ -5,12 +5,14 @@ class BoundingRect {
 	y;
 	height;
 	width;
+	rotation;
 
-	constructor(x, y, height, width) {
+	constructor(x, y, height, width, rotation) {
 		this.x = x;
 		this.y = y; 
 		this.height = height;
 		this.width = width;
+		this.rotation = rotation;
 	}
 }
 
