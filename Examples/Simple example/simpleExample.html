@@ -152,7 +152,19 @@
         }
 
         let fusionUpdated = () => {
-
+            if (fusionOutput) {
+                if ( canvas.width != augmentaManager.fusion.videoOutInPixels.x || canvas.height != augmentaManager.fusion.videoOutInPixels.y 
+                || canvas.style.left != augmentaManager.fusion.offset.x + 'px' || canvas.style.top != augmentaManager.fusion.offset.y + 'px') 
+                {
+                    canvas.width = augmentaManager.fusion.videoOutInPixels.x;
+                    canvas.height = augmentaManager.fusion.videoOutInPixels.y;
+                    canvas.style.left = augmentaManager.fusion.offset.x + 'px';
+                    canvas.style.top = augmentaManager.fusion.offset.y + 'px';
+                    canvas.style.position = "absolute";
+                    console.log("fusion was updated!");
+                }
+            }
+            
         }
 
         // Augmenta Manager
@@ -165,6 +177,7 @@
         augmentaManager.setObjectWillLeave(objectWillLeave);
         augmentaManager.setWebsocketOpened(websocketOpened);
         augmentaManager.setWebsocketClosed(websocketClosed);
+        augmentaManager.setFusionUpdated(fusionUpdated);
 
         //Set TimeOut
         augmentaManager.timeOut = 40;

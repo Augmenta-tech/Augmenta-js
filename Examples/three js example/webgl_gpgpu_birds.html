@@ -7,11 +7,11 @@
 		<link type="text/css" rel="stylesheet" href="main.css">
 		<style>
 			body {
-				background-color: #fff;
-				color: #444;
+				background-color: #000;
+				color: rgb(143, 143, 143);
 			}
 			a {
-				color:#08f;
+				color:rgb(118, 179, 233);
 			}
 		</style>
 	</head>
@@ -389,9 +389,14 @@
 						const x = ( birdIndex % WIDTH ) / WIDTH;
 						const y = ~ ~ ( birdIndex / WIDTH ) / WIDTH;
 
+						// const c = new THREE.Color(
+						// 	0x444444 +
+						// 	~ ~ ( v / 9 ) / BIRDS * 0x666666
+						// );
+
 						const c = new THREE.Color(
-							0x444444 +
-							~ ~ ( v / 9 ) / BIRDS * 0x666666
+							0xFFFFFF +
+							~ ~ ( v / 9 ) / BIRDS * 0xC9C9C9
 						);
 
 						birdColors.array[ v * 3 + 0 ] = c.r;
@@ -533,17 +538,17 @@
 
 			let container, stats;
 			let camera, scene, renderer;
-			let mouseX = 0, mouseY = 0;
+			let mouseX = 1000, mouseY = 1000;
 
 			let windowHalfX = window.innerWidth / 2;
 			let windowHalfY = window.innerHeight / 2;
 
             let fuWidth, fuHeight;
             let fuOffsetX = 0, fuOffsetY = 0;
+			let useFusionPresets = false;
             let manualWidth = window.innerWidth, manualHeight = window.innerHeight;
-            let manualMode = false;
-            
             let manualOffsetX = 0, manualOffsetY = 0;
+            let manualMode = false;   
 
 			const BOUNDS = 800, BOUNDS_HALF = BOUNDS / 2;
 
@@ -566,7 +571,6 @@
             //display mode
             let mode = "Oldest Object";
             let debugMode = false;
-            let useFusionPresets = false;
             let displayPredators = false;
 
             //to make sure it doesn't update an object if it is being added
@@ -584,7 +588,8 @@
 				camera.position.z = 350;
 
 				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xffffff );
+				// scene.background = new THREE.Color( 0xffffff );
+				scene.background = new THREE.Color( 0x111111 );
 				scene.fog = new THREE.Fog( 0xffffff, 100, 1000 );
 
 				renderer = new THREE.WebGLRenderer();
@@ -830,6 +835,33 @@
                         }
                     }
                 }
+
+				let fusionUpdated = () => {
+					if(useFusionPresets) {
+						if(fuWidth != augmentaManager.fusion.videoOutInPixels.x || fuHeight != augmentaManager.fusion.videoOutInPixels.y || 
+							fuOffsetX != augmentaManager.fusion.offset.x || fuOffsetY != augmentaManager.fusion.offset.y) {
+							
+							// Update Size
+							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
+                            fuHeight = augmentaManager.fusion.videoOutInPixels.y;
+                        
+                            // Update Offset
+                            fuOffsetX = augmentaManager.fusion.offset.x;
+                            fuOffsetY = augmentaManager.fusion.offset.y;
+
+							windowHalfX = fuWidth / 2;
+				            windowHalfY = fuHeight / 2;
+
+				            camera.aspect = fuWidth / fuHeight;
+				            camera.updateProjectionMatrix();
+
+                            // Set offset and size
+			                renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
+
+							console.log("fusion updated!")
+						}
+					}
+				}
 			
                 //Initialize augmenta manager 
                 let augmentaManager = new AugmentaManager();
@@ -840,6 +872,7 @@
                 augmentaManager.setObjectWillLeave(objectWillLeave);
                 augmentaManager.setWebsocketOpened(websocketOpened);
                 augmentaManager.setWebsocketClosed(websocketClosed);
+				augmentaManager.setFusionUpdated(fusionUpdated);
             
                 //Start websocket connection
                 augmentaManager.startAugmentaWebsocket();
@@ -1085,7 +1118,7 @@
 
                     if (isConnected) {
 
-                        useFusionPresets = augmentaController.useFusionPresets;
+                        useFusionPresets = outputController.useFusionPresets;
 
                         if (useFusionPresets) {
 
@@ -1292,7 +1325,7 @@
 
 			function onWindowResize() {
 
-                if (!useFusionPresets) 
+                if (!useFusionPresets && !manualMode) 
                 {
 				    windowHalfX = window.innerWidth / 2;
 				    windowHalfY = window.innerHeight / 2;
@@ -1302,7 +1335,7 @@
 
 				    renderer.setSize( window.innerWidth, window.innerHeight );
 
-                } else {
+                } /**else {
 
 				    camera.aspect = fuWidth / fuHeight;
 				    camera.updateProjectionMatrix();
@@ -1311,7 +1344,7 @@
                     renderer.setSize( fuWidth, fuHeight );
 			        renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
 
-               }
+               } */
 
 			}
 
