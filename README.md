@@ -50,6 +50,11 @@ augmentaManager.setWebsocketOpened(websocketOpened)
 augmentaManager.setWebsocketClosed(websocketClosed)
 ```  
 With ```websocketOpened``` and ```websocketClosed``` javascript functions taking no argument.
+
+```javascript
+augmentaManager.setFusionUpdated(objectEntered)
+```
+With ```fusionUpdated``` a javascript function taking an instance of class Fusion as only argument.
   
 ### Extra
 
