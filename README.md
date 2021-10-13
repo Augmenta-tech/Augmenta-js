@@ -21,7 +21,7 @@ You can change the websocket's address either by changing the port and/or the ip
 augmentaManager.changePort(port)
 ```
 ```javascript
-augmentaManager.changeIp(ip)
+augmentaManager.changeIP(ip)
 ```
 ```javascript
 augmentaManager.websocketurl = websocketurl
@@ -50,11 +50,16 @@ augmentaManager.setWebsocketOpened(websocketOpened)
 augmentaManager.setWebsocketClosed(websocketClosed)
 ```  
 With ```websocketOpened``` and ```websocketClosed``` javascript functions taking no argument.
+
+```javascript
+augmentaManager.setFusionUpdated(objectEntered)
+```
+With ```fusionUpdated``` a javascript function taking an instance of class Fusion as only argument.
   
 ### Extra
 
 You can change the time an inactive object is stored by the augmenta manager. 
-``` javascrip
+``` javascript
 augmentaManager.timeOut = timeOut
 ```  
 With ```timeOut``` the number of frame an object can remain inactive before being removed from the scene.
