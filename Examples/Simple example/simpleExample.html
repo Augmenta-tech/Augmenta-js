@@ -108,6 +108,8 @@
         let manualWidth, manualHeight;
         let manualOffsetX, manualOffsetY;
 
+        let bgDisplayed = false;
+
         //set functions
         let objectUpdatedAll = (augmentaObject) => {
 
@@ -132,6 +134,7 @@
 
         let objectWillLeave = (augmentaObject) => {
             ctx.clearRect(0,0,2000,1000);
+            bgDisplayed = false;
         }
 
         //get status element
@@ -149,9 +152,15 @@
             isConnected = false;
             connstatus.innerHTML = "Disconnected";
             ctx.clearRect(0,0,canvas.width,canvas.height);
+            bgDisplayed = false;
         }
 
         let fusionUpdated = () => {
+
+            if (!bgDisplayed) {
+                drawBackground()
+            }
+
             if (fusionOutput) {
                 if ( canvas.width != augmentaManager.fusion.videoOutInPixels.x || canvas.height != augmentaManager.fusion.videoOutInPixels.y 
                 || canvas.style.left != augmentaManager.fusion.offset.x + 'px' || canvas.style.top != augmentaManager.fusion.offset.y + 'px') 
@@ -223,6 +232,7 @@
         function changePort() {
 
             ctx.clearRect(0,0,canvas.width,canvas.height);
+            bgDisplayed = false;
 
             port = document.getElementById("port").value;
 
@@ -234,6 +244,7 @@
         function changeIP() {
 
             ctx.clearRect(0,0,canvas.width,canvas.height);
+            bgDisplayed = false;
 
             ip = document.getElementById("ip1").value + '.' + document.getElementById("ip2").value + '.' + document.getElementById("ip3").value + '.' +document.getElementById("ip4").value;
 
@@ -260,6 +271,7 @@
         function applyFusionOutput() {
 
             ctx.clearRect(0,0,canvas.width,canvas.height);
+            bgDisplayed = false;
 
             fusionOutput = document.getElementById("fusion output").checked == true;
 
@@ -307,6 +319,7 @@
         function applyManualOutput() {
 
             ctx.clearRect(0,0,canvas.width,canvas.height);
+            bgDisplayed = false;
 
             manualWidth = document.getElementById('width').value;
             manualHeight = document.getElementById('height').value;
@@ -334,6 +347,7 @@
 
             // clear canvas
             ctx.clearRect(0,0,canvas.width,canvas.height);
+            bgDisplayed = false;
 
             let dx = canvas.width / augmentaManager.fusion.videoOut.x;
             let dy = canvas.height / augmentaManager.fusion.videoOut.y;
@@ -354,6 +368,8 @@
                     }
                 }
             }
+
+            bgDisplayed = true;
         }
 
         function drawObject(object) {

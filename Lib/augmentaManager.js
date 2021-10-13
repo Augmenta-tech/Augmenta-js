@@ -6,16 +6,13 @@ import { Fusion } from './fusion.js';
 /**
 *
 * AugmentaManager : connects to a given websocket address, receives and parses websockect messages sent
-* Easy acces to all useful info sent by augmentaFusion
+* Easy acces to all useful info sent by AugmentaFusion
 * - augmenta objects stored in a dictionary (key: id, value: augmentaObject)
 * - augmenta scene
 * - fusion
 *
 */
 class AugmentaManager {
-
-	#_initialized;
-	#_websocketConnected;
 
 	//Number of frame without update before we delete object
 	#_augmentaObjectTimeOut;
@@ -47,9 +44,6 @@ class AugmentaManager {
 	#_fusionUpdated;
 
 	constructor() {
-
-		this.#_initialized = false;
-		this.#_websocketConnected = false;
 
 		this.#_augmentaObjectTimeOut = 20;
 
@@ -100,7 +94,6 @@ class AugmentaManager {
 
 		//Websocket connection opened
 		this.#_socket.onopen = () => {
-			this.#_websocketConnected = true;
 			if (this.#_websocketOpened != undefined) {
 				this.#_websocketOpened();
 			}
@@ -108,7 +101,6 @@ class AugmentaManager {
 			clearInterval(this.#_timerId);
 
 			this.#_socket.onclose = () => {
-				this.#_websocketConnected = false;
 				this.#_websocketClosed();
 				this.#_timerId = setInterval(() => {
 					console.log("trying to connect to " + this.#_websocketurl);
@@ -188,8 +180,6 @@ class AugmentaManager {
 				}
 			}
 		}	
-		
-		this.#_initialized = true;
 	}
 
 	/**For users to change all the default functions for each event : 

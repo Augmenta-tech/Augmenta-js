@@ -2,7 +2,7 @@
 import {vec2} from './tools.js'
 
 /**
-* 
+* Fusion : to store all information received from fusion about fusion settings
 */
 
 class Fusion {
