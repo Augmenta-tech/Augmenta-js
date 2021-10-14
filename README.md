@@ -119,7 +119,7 @@ To get an object's relative position in the scene. Returns a ```vec2```.
   
 ## Examples 
   
-To run the examples you can either run them locally on web server for local development such as [Servez](https://greggman.github.io/servez/) and open the repo's folder or try them directly by clicking [here](https://theoriz.github.io/Augmenta-js/index.html).
+To run the examples you can either run them locally on a web server for local development such as [Servez](https://greggman.github.io/servez/) and open the repo's folder or try them directly [here](https://theoriz.github.io/Augmenta-js).
 
 There is two examples : a very simple one using no other librairies than this one, and a more complex example adapted from a [three js example](https://threejs.org/examples/?q=gpgp#webgl_gpgpu_birds).
 - Augmenta-js/Simple Example/simpleExample.html
