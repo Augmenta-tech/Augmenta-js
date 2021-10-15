@@ -1,5 +1,9 @@
 # Augmenta-js
 
+## Demo
+
+Try the live examples [here](https://theoriz.github.io/Augmenta-js)
+
 ## Documentation
   
 ### Initialize augmenta manager and open websocket connection
@@ -119,7 +123,7 @@ To get an object's relative position in the scene. Returns a ```vec2```.
   
 ## Examples 
   
-To run the examples locally you can use a web server for local development such as [Servez](https://greggman.github.io/servez/) and open the repo's folder.   
+To run the examples you can run them locally on a web server for local development such as [Servez](https://greggman.github.io/servez/) and open the repo's folder.
 
 There is two examples : a very simple one using no other librairies than this one, and a more complex example adapted from a [three js example](https://threejs.org/examples/?q=gpgp#webgl_gpgpu_birds).
 - Augmenta-js/Simple Example/simpleExample.html
