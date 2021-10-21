@@ -919,6 +919,7 @@
                 const augmentaController = {
 					port: 8080,
 					ip: '127.0.0.1',
+					useSecureConnection: false,
                     displayMode: "Oldest Object",
                     enableDebugMode: false,
                     displayPredators: false
@@ -929,9 +930,11 @@
                 const auChanger = function () {
 					port = augmentaController.port;
 					ip = augmentaController.ip;
+					var useSecureConnection = augmentaController.useSecureConnection;
 
                     augmentaManager.changePort(port);
                     augmentaManager.changeIP(ip); 
+					augmentaManager.useSecureConnection = useSecureConnection;
 
 				}
 
@@ -1095,6 +1098,7 @@
 
 				augmentaFolder.add( augmentaController, 'ip', '127.0.0.1').onChange( auChanger );
 				augmentaFolder.add( augmentaController, 'port', 8080).onChange( auChanger );
+				augmentaFolder.add( augmentaController, 'useSecureConnection', false).onChange( auChanger );
                 augmentaFolder.add( augmentaController, 'displayMode', ["Oldest Object", "Newest Object", "All Objects"]).onChange( displayChanger );
                 augmentaFolder.add( augmentaController, 'displayPredators', false).onChange( predatorChanger );
                 augmentaFolder.add( augmentaController, 'enableDebugMode', false).onChange( debugModeChanger );

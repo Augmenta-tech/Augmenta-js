@@ -31,6 +31,9 @@
         <input type="number" id="port" value="8080" style="height:20px;width:60px" />
         <button type="button" id="portbutton"> apply </button>
 
+        <label for="use secure connection"> <strong> Use secure connection : </strong> </label> 
+        <input type="checkbox" id="useSecureConnection" name="use secure connection">
+
         <div id="info">
             <strong>Status: </strong><span id="connectionstatus">Disconnected</span>
         </div>
@@ -253,6 +256,20 @@
         }
         document.getElementById('ipbutton').addEventListener('click', changeIP)
 
+        
+        function secureConnection() {
+
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            bgDisplayed = false;
+
+            useSecureConnection = document.getElementById("useSecureConnection").checked;
+
+            augmentaManager.useSecureConnection = useSecureConnection;
+
+        }
+        document.getElementById('useSecureConnection').addEventListener('click', secureConnection)
+
+
         var radios = document.forms["display mode"].elements["mode"];
         for(var i = 0, max = 3; i < max; i++) {
             radios[i].onclick = function() {
@@ -273,7 +290,7 @@
             ctx.clearRect(0,0,canvas.width,canvas.height);
             bgDisplayed = false;
 
-            fusionOutput = document.getElementById("fusion output").checked == true;
+            fusionOutput = document.getElementById("fusion output").checked ;
 
             if (fusionOutput) {
 
@@ -300,7 +317,7 @@
 
         function enableManualOutput() {
 
-            manualOutput = document.getElementById("manual output").checked == true;
+            manualOutput = document.getElementById("manual output").checked;
 
             if (manualOutput) {
 

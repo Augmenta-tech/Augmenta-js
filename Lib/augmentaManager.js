@@ -26,6 +26,7 @@ class AugmentaManager {
 	#_ip;
 	#_port;
 	#_websocketurl;
+	#_useSecureConnection;
 	#_socket;
 	#_timerId; //timer, if failed to connect, try again 10 sec after
 
@@ -50,6 +51,7 @@ class AugmentaManager {
 		//Default websocket url
 		this.#_ip = '127.0.0.1';
 		this.#_port = 8080;
+		this.#_useSecureConnection = false;
 		this.#_websocketurl = 'ws://' + this.#_ip + ':' + this.#_port;
 
 		//Augmenta info
@@ -367,7 +369,8 @@ class AugmentaManager {
 			this.#_socket.close();		
 
 			this.#_port = port;
-			this.#_websocketurl = 'ws://' + this.#_ip + ':' + this.#_port;
+			if(this.#_useSecureConnection) this.#_websocketurl = 'wss://' + this.#_ip + ':' + this.#_port;
+			else this.#_websocketurl = 'ws://' + this.#_ip + ':' + this.#_port;
 			console.log('trying to connect to: ' + this.#_websocketurl);
 
 			this.startAugmentaWebsocket();
@@ -389,7 +392,8 @@ class AugmentaManager {
 			this.#_socket.close();
 
 			this.#_ip = ip;
-			this.#_websocketurl = 'ws://' + this.#_ip + ':' + this.#_port;
+			if(this.#_useSecureConnection) this.#_websocketurl = 'wss://' + this.#_ip + ':' + this.#_port;
+			else this.#_websocketurl = 'ws://' + this.#_ip + ':' + this.#_port;
 			console.log('trying to connect to: ' + this.#_websocketurl);
 
 			setTimeout(this.startAugmentaWebsocket(), 1000);
@@ -413,6 +417,26 @@ class AugmentaManager {
 
 		} else {
 			console.log("websocketurl must be a string")
+		}
+	}
+
+	set useSecureConnection (useSecureConnection) {
+		
+		// check type
+		if (typeof useSecureConnection == "boolean") {
+		
+			this.#_socket.close();
+
+			this.#_useSecureConnection = useSecureConnection;
+			if(this.#_useSecureConnection) this.#_websocketurl = 'wss://' + this.#_ip + ':' + this.#_port;
+			else this.#_websocketurl = 'ws://' + this.#_ip + ':' + this.#_port;
+
+			console.log('trying to connect to: ' + this.#_websocketurl);
+
+			setTimeout(this.startAugmentaWebsocket(), 1000);
+
+		} else {
+			console.log("useSecureConnection must be a boolean")
 		}
 	}
 
