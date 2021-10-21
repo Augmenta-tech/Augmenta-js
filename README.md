@@ -2,7 +2,7 @@
 
 ## Demo
 
-Try the live examples [here](https://theoriz.github.io/Augmenta-js)
+Try the live examples [here](https://augmenta-tech.github.io/Augmenta-js/)
 
 ## Documentation
   
