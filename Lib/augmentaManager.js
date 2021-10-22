@@ -126,7 +126,7 @@ class AugmentaManager {
 				}
 				
 				//Remove inactive objects in case willLeave message wasn't received
-				this.#checkAlive();
+				this.checkAlive();
 
 			}
 
@@ -443,7 +443,7 @@ class AugmentaManager {
 	/**
 	* Removes inactive objects in case willLeave message wasn't received properly by the websocket listener
 	*/
-	#checkAlive() {
+	checkAlive() {
 
 		let currentFrame = this.#_augmentaScene.frame;
 

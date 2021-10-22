@@ -36,7 +36,7 @@ class AugmentaObject {
 
 	}
 	
-	#initialize() {
+	initialize() {
 
 		//Choose a random color 
 		this.#_color = '#'+Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
@@ -51,7 +51,7 @@ class AugmentaObject {
 	{	
 
 		if (!this.#_initialized) {
-			this.#initialize();
+			this.initialize();
 		}
 
 		let msg = JSON.parse(message.data);
@@ -75,7 +75,7 @@ class AugmentaObject {
 	//On enter message
 	initializeAugmentaObject(message) 
 	{	
-		this.#initialize();
+		this.initialize();
 
 		let msg = JSON.parse(message.data);
 
