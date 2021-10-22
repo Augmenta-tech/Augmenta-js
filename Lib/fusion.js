@@ -38,8 +38,12 @@ class Fusion {
 		return this.#_offset;
 	}
 
-	set offset (offset) {
-		this.#_offset = offset;
+	set offsetX (offsetX) {
+		this.#_offset.x = offsetX;
+	}
+
+	set offsetX (offsetY) {
+		this.#_offset.x = offsetY;
 	}
 };
 

@@ -839,15 +839,15 @@
 				let fusionUpdated = () => {
 					if(useFusionPresets) {
 						if(fuWidth != augmentaManager.fusion.videoOutInPixels.x || fuHeight != augmentaManager.fusion.videoOutInPixels.y || 
-							fuOffsetX != augmentaManager.fusion.offset.x || fuOffsetY != augmentaManager.fusion.offset.y) {
+							fuOffsetX != augmentaManager.fusion.offsetX || fuOffsetY != augmentaManager.fusion.offsetY) {
 							
 							// Update Size
 							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
                             fuHeight = augmentaManager.fusion.videoOutInPixels.y;
                         
                             // Update Offset
-                            fuOffsetX = augmentaManager.fusion.offset.x;
-                            fuOffsetY = augmentaManager.fusion.offset.y;
+                            fuOffsetX = augmentaManager.fusion.offsetX;
+                            fuOffsetY = augmentaManager.fusion.offsetY;
 
 							windowHalfX = fuWidth / 2;
 				            windowHalfY = fuHeight / 2;
@@ -1165,6 +1165,10 @@
 							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
 							fuHeight = augmentaManager.fusion.videoOutInPixels.y;
 
+							
+							augmentaManager.fusion.offsetX = fuOffsetX;
+							augmentaManager.fusion.offsetY = fuOffsetY;
+
 							windowHalfX = fuWidth / 2;
 							windowHalfY = fuHeight / 2;
 
@@ -1178,20 +1182,21 @@
 
 				const computeOffset = function() {
 					
-					//fusionOutputController.offsetX = 1;
-					//fusionOutputController.offsetY = 1;
+					fusionOutputController.offsetX = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
+					fusionOutputController.offsetY = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
+					gui.updateDisplay()
 
 					// Update Offset
 					fuOffsetX = fusionOutputController.offsetX;
 					fuOffsetY = fusionOutputController.offsetY;
 
-					if (autoComputeOffset) {
+					if (fusionOutputController.autoComputeOffset) {
 						changeFusionOffset();
 					}
 				}
 
 				fusionOutputFolder.add( fusionOutputController, 'fusionPresets', false).onChange( fusionPresets );
-				//fusionOutputFolder.add( fusionOutputController, 'autoComputeOffset', false).onChange( computeOffset );
+				fusionOutputFolder.add( fusionOutputController, 'autoComputeOffset', false).onChange( computeOffset );
 				fusionOutputFolder.add( fusionOutputController, 'offsetX', 0).onChange( changeFusionOffset );
 				fusionOutputFolder.add( fusionOutputController, 'offsetY', 0).onChange( changeFusionOffset );
 
@@ -1389,18 +1394,12 @@
 
 				    renderer.setSize( window.innerWidth, window.innerHeight );
 
-                } /** else if (useFusionPresets) {
+                } else if (useFusionPresets && autoComputeOffset) {
 
-					windowHalfX = fuWidth / 2;
-					windowHalfY = fuHeight / 2;
+					computeOffset();
+					console.log("resized")
 
-					camera.aspect = fuWidth / fuHeight;
-					camera.updateProjectionMatrix();
-
-					// Set offset and size
-					renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
-
-               } */
+               }
 
 			}
 
