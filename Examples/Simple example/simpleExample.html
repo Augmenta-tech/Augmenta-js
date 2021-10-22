@@ -426,10 +426,16 @@
             let y = object.boundingRect.y * canvas.height;
             let w = object.boundingRect.width * canvas.width;
             let h = object.boundingRect.height * canvas.height;
-            let angle = - object.boundingRect.rotation * Math.PI * 2 / 360;
 
-            ctx.translate(x + w/2,y + h/2);
-            ctx.rotate(angle);
+            let theta = - object.boundingRect.rotation * Math.PI * 2 / 360;
+            let s = Math.sin(theta);
+            let c = Math.cos(theta);
+
+            ctx.fillStyle = object.color;
+            ctx.fillRect(object.centroid.x * canvas.width - 5,object.centroid.y * canvas.height - 5, 10, 10);
+
+            ctx.translate(x + (w/2)*c - (h/2)*s,y + (w/2)*s + (h/2)*c);
+            ctx.rotate(theta);
 
             ctx.globalAlpha = 0.3;
             ctx.fillStyle = '#000000';
