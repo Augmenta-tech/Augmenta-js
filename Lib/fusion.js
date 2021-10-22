@@ -10,6 +10,7 @@ class Fusion {
 	#_textureOffset;
 	#_textureBounds;
 	#_targetOutSize;
+	#_offset;
 
 	constructor() {}
 
@@ -23,7 +24,7 @@ class Fusion {
 
 	}
 
-	get offset () {
+	get textureOffset () {
 		return this.#_textureOffset;
 	}
 	get videoOut () {
@@ -31,6 +32,14 @@ class Fusion {
 	}
 	get videoOutInPixels () {
 		return this.#_targetOutSize;
+	}
+	
+	get offset () {
+		return this.#_offset;
+	}
+
+	set offset (offset) {
+		this.#_offset = offset;
 	}
 };
 

@@ -910,11 +910,10 @@
 				effectFolder.add( effectController, 'separation', 0.0, 100.0, 1.0 ).onChange( valuesChanger );
 				effectFolder.add( effectController, 'alignment', 0.0, 100, 0.001 ).onChange( valuesChanger );
 				effectFolder.add( effectController, 'cohesion', 0.0, 100, 0.025 ).onChange( valuesChanger );
-	
-				const augmentaFolder = gui.addFolder('Augmenta Manager');
-
 				
                 /////// AUGMENTA CONTROLLER ///////
+
+				const augmentaFolder = gui.addFolder('Augmenta Manager');
 
                 const augmentaController = {
 					port: 8080,
@@ -1104,61 +1103,113 @@
                 augmentaFolder.add( augmentaController, 'enableDebugMode', false).onChange( debugModeChanger );
 
 
+				//////// FUSION OUTPUT SIZE ///////// 
+
+				const fusionOutputFolder = gui.addFolder('Fusion output');
+
+				const fusionOutputController = {
+					fusionPresets: false,
+					offsetX: 0,
+					offsetY: 0,
+					autoComputeOffset: false
+				};
+
+                // Enable or disable fusion presets for output video
+                const fusionPresets = function () {
+
+					if (isConnected) {
+
+						useFusionPresets = fusionOutputController.fusionPresets;
+
+						if (useFusionPresets) {
+
+							// Update Size
+							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
+							fuHeight = augmentaManager.fusion.videoOutInPixels.y;
+						
+							// Update Offset
+							fuOffsetX = fusionOutputController.offsetX;
+							fuOffsetY = fusionOutputController.offsetY;
+
+							windowHalfX = fuWidth / 2;
+							windowHalfY = fuHeight / 2;
+
+							camera.aspect = fuWidth / fuHeight;
+							camera.updateProjectionMatrix();
+
+							// Set offset and size
+							renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
+
+						} else {
+
+							windowHalfX = window.innerWidth / 2;
+							windowHalfY = window.innerHeight / 2;
+
+							camera.aspect = window.innerWidth / window.innerHeight;
+							camera.updateProjectionMatrix();
+
+							renderer.setSize( window.innerWidth, window.innerHeight );
+						}
+					}
+				}
+
+				const changeFusionOffset = function() {
+
+					// Update Offset
+					fuOffsetX = fusionOutputController.offsetX;
+					fuOffsetY = fusionOutputController.offsetY;
+
+					if (useFusionPresets) {
+
+							// Update Size
+							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
+							fuHeight = augmentaManager.fusion.videoOutInPixels.y;
+
+							windowHalfX = fuWidth / 2;
+							windowHalfY = fuHeight / 2;
+
+							camera.aspect = fuWidth / fuHeight;
+							camera.updateProjectionMatrix();
+
+							// Set offset and size
+							renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
+					}
+				} 
+
+				const computeOffset = function() {
+					
+					//fusionOutputController.offsetX = 1;
+					//fusionOutputController.offsetY = 1;
+
+					// Update Offset
+					fuOffsetX = fusionOutputController.offsetX;
+					fuOffsetY = fusionOutputController.offsetY;
+
+					if (autoComputeOffset) {
+						changeFusionOffset();
+					}
+				}
+
+				fusionOutputFolder.add( fusionOutputController, 'fusionPresets', false).onChange( fusionPresets );
+				//fusionOutputFolder.add( fusionOutputController, 'autoComputeOffset', false).onChange( computeOffset );
+				fusionOutputFolder.add( fusionOutputController, 'offsetX', 0).onChange( changeFusionOffset );
+				fusionOutputFolder.add( fusionOutputController, 'offsetY', 0).onChange( changeFusionOffset );
+
                 //////// CUSTOM OUTPUT SIZE ///////// 
 
-                const outputFolder = gui.addFolder('Output');
+                const customOutputFolder = gui.addFolder('Custom output');
 
-				const outputController = {
+				const customOutputController = {
                     manualOutput: false,
-                    useFusionPresets: false,
 					offsetX: 0,
 					offsetY: 0,
 					width: window.innerWidth,
 					height: window.innerHeight,
 				};
 
-                // Enable or disable fusion presets for output video
-                const fusionPresets = function () {
-
-                    if (isConnected) {
-
-                        useFusionPresets = outputController.useFusionPresets;
-
-                        if (useFusionPresets) {
-
-                            // Update Size
-                            fuWidth = augmentaManager.fusion.videoOutInPixels.x;
-                            fuHeight = augmentaManager.fusion.videoOutInPixels.y;
-                        
-                            // Update Offset
-                            fuOffsetX = augmentaManager.fusion.offset.x;
-                            fuOffsetY = augmentaManager.fusion.offset.y;
-                    
-                            windowHalfX = fuWidth / 2;
-				            windowHalfY = fuHeight / 2;
-
-				            camera.aspect = fuWidth / fuHeight;
-				            camera.updateProjectionMatrix();
-
-                            // Set offset and size
-			                renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
-
-                        } else {
-
-				            windowHalfX = window.innerWidth / 2;
-				            windowHalfY = window.innerHeight / 2;
-
-				            camera.aspect = window.innerWidth / window.innerHeight;
-				            camera.updateProjectionMatrix();
-
-				            renderer.setSize( window.innerWidth, window.innerHeight );
-                        }
-                    }
-                }
-
                 const manualModeChanger = function () 
                 {
-                    manualMode = outputController.manualOutput;
+                    manualMode = customOutputController.manualOutput;
                     if (manualMode) {
                         renderer.setViewport(manualOffsetX,window.innerHeight - manualOffsetY - manualHeight, manualWidth, manualHeight);
                     } else if (isConnected) {
@@ -1177,11 +1228,11 @@
 
                 const outputChanger = function () 
                 {                    
-                    manualOffsetX = outputController.offsetX;
-                    manualOffsetY = outputController.offsetY;
+                    manualOffsetX = customOutputController.offsetX;
+                    manualOffsetY = customOutputController.offsetY;
                     
-                    manualWidth = outputController.width;
-                    manualHeight = outputController.height;
+                    manualWidth = customOutputController.width;
+                    manualHeight = customOutputController.height;
 
                     if (manualMode) {
                         // Set offset
@@ -1189,12 +1240,11 @@
                     }
                 }
 
-                outputFolder.add( outputController, 'useFusionPresets', false).onChange( fusionPresets );
-                outputFolder.add( outputController, 'manualOutput', false).onChange( manualModeChanger );
-                outputFolder.add( outputController, 'offsetX', 0).onChange( outputChanger );
-                outputFolder.add( outputController, 'offsetY', 0).onChange( outputChanger );
-                outputFolder.add( outputController, 'width', 0).onChange( outputChanger );
-                outputFolder.add( outputController, 'height', 0).onChange( outputChanger );
+                customOutputFolder.add( customOutputController, 'manualOutput', false).onChange( manualModeChanger );
+                customOutputFolder.add( customOutputController, 'offsetX', 0).onChange( outputChanger );
+                customOutputFolder.add( customOutputController, 'offsetY', 0).onChange( outputChanger );
+                customOutputFolder.add( customOutputController, 'width', 0).onChange( outputChanger );
+                customOutputFolder.add( customOutputController, 'height', 0).onChange( outputChanger );
 
 				gui.close();
 
@@ -1339,14 +1389,16 @@
 
 				    renderer.setSize( window.innerWidth, window.innerHeight );
 
-                } /**else {
+                } /** else if (useFusionPresets) {
 
-				    camera.aspect = fuWidth / fuHeight;
-				    camera.updateProjectionMatrix();
+					windowHalfX = fuWidth / 2;
+					windowHalfY = fuHeight / 2;
 
-                    // Set offset and size
-                    renderer.setSize( fuWidth, fuHeight );
-			        renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
+					camera.aspect = fuWidth / fuHeight;
+					camera.updateProjectionMatrix();
+
+					// Set offset and size
+					renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
 
                } */
 
