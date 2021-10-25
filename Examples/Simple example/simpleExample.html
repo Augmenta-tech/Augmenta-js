@@ -66,12 +66,14 @@
             <input type="checkbox" id="fusion output" name="fusion output" checked>
             <label for="fusion output"> <strong> Fusion output : </strong> </label> 
 
+            Size : <span id="fuSize">0 x 0 px,</span>
+
             <label>Offset : </label>
             <input type="number" id="fuOffsetX" value="0" style="height:20px;width:50px" />
             <input type="number" id="fuOffsetY" value="0" style="height:20px;width:50px" />
 
             <input type="checkbox" id="compute offset" name="compute offset" checked> 
-            <label for="compute offset"> Centered Offset </label> 
+            <label for="compute offset"> Centered </label> 
         </div> 
 
         <span class="brsmall"></span>
@@ -159,6 +161,8 @@
         //get info div element
         var infodiv = document.getElementById("info");
 
+        var fuSize = document.getElementById("fuSize");
+
         let websocketOpened = () => {
             isConnected = true;
             connstatus.innerHTML = "Connected!";
@@ -185,6 +189,8 @@
                     canvas.style.top = document.getElementById("fuOffsetY").value + 'px';
                     canvas.style.position = "absolute";
                 }
+
+                fuSize.innerHTML = canvas.width + " x " + canvas.height + " px,";
                 isBgInitialized = true;
             }
 

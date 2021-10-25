@@ -573,7 +573,7 @@
             let isConnected = false; // to know if the connection was successfull
 
             //display mode
-            let mode = "Oldest Object";
+            let mode = "All Objects";
             let debugMode = false;
             let displayObjects = false;
 
@@ -845,33 +845,25 @@
 					if(!isSceneInitialized) {
 
 						autoComputeOffset = fusionOutputController.autoComputeOffset;
-						
-						fusionOutputController.offsetX = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
-						fusionOutputController.offsetY = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
-						gui.updateDisplay()
 
-						// Update Offset
+						// Init Offset
 						fuOffsetX = fusionOutputController.offsetX;
 						fuOffsetY = fusionOutputController.offsetY;
 
 						if (autoComputeOffset) {
+
+							fusionOutputController.offsetX = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
+							fusionOutputController.offsetY = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
+							gui.updateDisplay()
+
+							// Update Offset
+							fuOffsetX = fusionOutputController.offsetX;
+							fuOffsetY = fusionOutputController.offsetY;
+
 							changeFusionOffset();
 						}
 
-						if(useFusionPresets) {
-							// Update Size
-							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
-							fuHeight = augmentaManager.fusion.videoOutInPixels.y;
-
-							windowHalfX = fuWidth / 2;
-							windowHalfY = fuHeight / 2;
-
-							camera.aspect = fuWidth / fuHeight;
-							camera.updateProjectionMatrix();
-
-							// Set offset and size
-							renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
-						}
+						fusionPresets();
 
 						isSceneInitialized = true;
 					}
@@ -891,6 +883,7 @@
 
                             // Set offset and size
 			                renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
+							// renderer.setSize( fuWidth, fuHeight );
 
 							console.log("fusion updated!")
 						}
@@ -915,11 +908,23 @@
 
 				window.addEventListener( 'resize', onWindowResize );
                 container.style.touchAction = 'none';
-				//container.addEventListener( 'pointermove', onPointerMove );
+				container.addEventListener( 'pointerenter', onPointerEnter );
+				container.addEventListener( 'pointerleave', onPointerLeave );
 
                 /////// Controllers and UI ///////
 
 				const gui = new GUI();
+
+				GUI.TEXT_OPEN = " ";
+				GUI.TEXT_CLOSED = "Close Controls";
+
+				function onPointerEnter() {
+					gui.__closeButton.innerText = "Open Controls";
+				}
+
+				function onPointerLeave() {
+					gui.__closeButton.innerText = "";
+				}
 
 				const effectFolder = gui.addFolder('Effect');
 
@@ -944,7 +949,19 @@
 				effectFolder.add( effectController, 'separation', 0.0, 100.0, 1.0 ).onChange( valuesChanger );
 				effectFolder.add( effectController, 'alignment', 0.0, 100, 0.001 ).onChange( valuesChanger );
 				effectFolder.add( effectController, 'cohesion', 0.0, 100, 0.025 ).onChange( valuesChanger );
-				
+
+				/////// AUGMENTA INFO ///////
+
+				const augmentaInfo = gui.addFolder('Info');
+
+				const info = {
+					connected: false
+				}
+
+				let controller = augmentaInfo.add( info , 'connected', false);
+
+				// gui.__folders['info'].__controllers[0].domElement.hidden = true;
+
                 /////// AUGMENTA CONTROLLER ///////
 
 				const augmentaFolder = gui.addFolder('Augmenta Manager');
@@ -1173,6 +1190,7 @@
 
 							// Set offset and size
 							renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
+							// renderer.setSize( fuWidth, fuHeight );
 
 						} else {
 
@@ -1194,35 +1212,33 @@
 					fuOffsetY = fusionOutputController.offsetY;
 
 					if (useFusionPresets) {
+						// Update Size
+						fuWidth = augmentaManager.fusion.videoOutInPixels.x;
+						fuHeight = augmentaManager.fusion.videoOutInPixels.y;
 
-							// Update Size
-							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
-							fuHeight = augmentaManager.fusion.videoOutInPixels.y;
+						windowHalfX = fuWidth / 2;
+						windowHalfY = fuHeight / 2;
 
-							windowHalfX = fuWidth / 2;
-							windowHalfY = fuHeight / 2;
+						camera.aspect = fuWidth / fuHeight;
+						camera.updateProjectionMatrix();
 
-							camera.aspect = fuWidth / fuHeight;
-							camera.updateProjectionMatrix();
-
-							// Set offset and size
-							renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
+						// Set offset and size
+						renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
+						// renderer.setSize( fuWidth, fuHeight );
 					}
-				} 
+				}
 
 				const computeOffset = function() {
 
 					autoComputeOffset = fusionOutputController.autoComputeOffset;
-					
-					fusionOutputController.offsetX = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
-					fusionOutputController.offsetY = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
-					gui.updateDisplay()
-
-					// Update Offset
-					fuOffsetX = fusionOutputController.offsetX;
-					fuOffsetY = fusionOutputController.offsetY;
 
 					if (autoComputeOffset) {
+
+						// update UI
+						fusionOutputController.offsetX = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
+						fusionOutputController.offsetY = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
+						gui.updateDisplay()
+
 						changeFusionOffset();
 					}
 				}
@@ -1286,6 +1302,8 @@
 				gui.close();
 
 				initBirds();
+
+				gui.__folders["Info"].__controllers[0].domElement.hidden = true;
 			}
 
 			function initComputeRenderer() {
@@ -1427,10 +1445,6 @@
 				isSceneInitialized = false;
 
 			}
-
-            function onPointerMove( event ) {
-                console.log(event.clientX + ',' + event.clientY);
-            }
 
 			function animate() {
 
