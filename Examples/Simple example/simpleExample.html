@@ -63,14 +63,15 @@
         <span class="brsmall"></span>
 
         <div>
-            <input type="checkbox" id="fusion output" name="fusion output">
+            <input type="checkbox" id="fusion output" name="fusion output" checked>
             <label for="fusion output"> <strong> Fusion output : </strong> </label> 
 
             <label>Offset : </label>
             <input type="number" id="fuOffsetX" value="0" style="height:20px;width:50px" />
             <input type="number" id="fuOffsetY" value="0" style="height:20px;width:50px" />
 
-            <button type="button" id="compute offset"> Compute offset </button>
+            <input type="checkbox" id="compute offset" name="compute offset" checked> 
+            <label for="compute offset"> Centered Offset </label> 
         </div> 
 
         <span class="brsmall"></span>
@@ -112,8 +113,13 @@
         let isConnected = false; // Websocket connection's status
         let useSecureConnection;
 
-        let fusionOutput = false;
+        let fusionOutput = true;
         let manualOutput = false;
+
+        let isBgInitialized = false;
+
+        let useComputeOffset = true;
+        let fuWidth, fuHeight;
 
         let manualWidth, manualHeight;
         let manualOffsetX, manualOffsetY;
@@ -167,6 +173,21 @@
 
         let fusionUpdated = () => {
 
+            if (useComputeOffset) {
+                computeOffset();
+            }
+
+            if (!isBgInitialized) {
+                if(fusionOutput) {
+                    canvas.width = augmentaManager.fusion.videoOutInPixels.x;
+                    canvas.height = augmentaManager.fusion.videoOutInPixels.y;
+                    canvas.style.left = document.getElementById("fuOffsetX").value + 'px';
+                    canvas.style.top = document.getElementById("fuOffsetY").value + 'px';
+                    canvas.style.position = "absolute";
+                }
+                isBgInitialized = true;
+            }
+
             if (!bgDisplayed) {
                 drawBackground()
             }
@@ -214,6 +235,9 @@
                 canvas.height = window.innerHeight - 215;
                 canvas.style.left = "7px";
                 canvas.style.top = "205px";
+
+            } else if (fusionOutput && useComputeOffset) {
+                computeOffset();
             }
         }
 
@@ -236,6 +260,7 @@
                 canvas.style.top = "205px";
             } 
             else if (e.key == "m" && event.ctrlKey) {
+                useComputeOffset = document.getElementById('compute offset').checked =  true;
                 computeOffset();
             }
         }
@@ -326,8 +351,18 @@
         document.getElementById('fusion output').addEventListener('click', applyFusionOutput)
 
         function computeOffset() {
-            document.getElementById("fuOffsetX").value = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
-            document.getElementById("fuOffsetY").value = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
+
+            useComputeOffset = document.getElementById('compute offset').checked;
+
+            if (useComputeOffset) {
+
+                document.getElementById("fuOffsetX").value = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
+                document.getElementById("fuOffsetY").value = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
+
+                fuWidth = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
+                fuHeight = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
+            }
+
         }
         document.getElementById('compute offset').addEventListener('click', computeOffset)
 

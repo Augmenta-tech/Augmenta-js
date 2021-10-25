@@ -545,10 +545,14 @@
 
             let fuWidth, fuHeight;
             let fuOffsetX = 0, fuOffsetY = 0;
-			let useFusionPresets = false;
+			let autoComputeOffset = true;
+			let useFusionPresets = true;
+
+			let isSceneInitialized = false; // first fusion msg
+
             let manualWidth = window.innerWidth, manualHeight = window.innerHeight;
             let manualOffsetX = 0, manualOffsetY = 0;
-            let manualMode = false;   
+            let manualMode = false;  
 
 			const BOUNDS = 800, BOUNDS_HALF = BOUNDS / 2;
 
@@ -571,7 +575,7 @@
             //display mode
             let mode = "Oldest Object";
             let debugMode = false;
-            let displayPredators = false;
+            let displayObjects = false;
 
             //to make sure it doesn't update an object if it is being added
             let lock = false;
@@ -620,7 +624,7 @@
                         mouseX = (augmentaObject.boundingRect.x - 0.5) * windowHalfX;
                         mouseY = - (augmentaObject.boundingRect.y - 0.5) * windowHalfY;
                         
-                        if (displayPredators) {
+                        if (displayObjects) {
                             if (predators[augmentaObject.id] !== undefined) {
                                 updatePredator(augmentaObject);
                             } else {
@@ -637,7 +641,7 @@
                         mouseX = (augmentaObject.boundingRect.x - 0.5) * windowHalfX;
                         mouseY = - (augmentaObject.boundingRect.y - 0.5) * windowHalfY;
 
-                        if (displayPredators) {
+                        if (displayObjects) {
                             if (predators[augmentaObject.id] !== undefined) {
                                 updatePredator(augmentaObject);
                             } else {
@@ -659,7 +663,7 @@
                         mouseX = (augmentaObject.boundingRect.x - 0.5) * windowHalfX;
                         mouseY = - (augmentaObject.boundingRect.y - 0.5) * windowHalfY;
 
-                        if (displayPredators) {
+                        if (displayObjects) {
                             if (predators[augmentaObject.id] !== undefined) {
                                 updatePredator(augmentaObject);
                             } else {
@@ -690,7 +694,7 @@
                             boundingBoxes[id].init();
                         }
 
-                        if (displayPredators) {
+                        if (displayObjects) {
                             initPredator(augmentaObject);
                         }
 
@@ -711,7 +715,7 @@
 
                         }
 
-                        if (displayPredators) {
+                        if (displayObjects) {
                             
                             for (var key in predators) {
                                 removePredator(augmentaManager.augmentaObjects[key]);
@@ -727,7 +731,7 @@
                             boundingBoxes[id].init();
                         }
 
-                        if (displayPredators) {
+                        if (displayObjects) {
                             initPredator(augmentaObject);
                         }
 
@@ -749,7 +753,7 @@
                             delete boundingBoxes[augmentaObject.id];
                         }
                                           
-                        if (displayPredators) {
+                        if (displayObjects) {
                             removePredator(augmentaObject);
                         }
 
@@ -769,7 +773,7 @@
                             }
                         }
 
-                        if (displayPredators) {
+                        if (displayObjects) {
                             removePredator(augmentaObject);
                             if (augmentaManager.augmentaScene.objCount !== 0) {
                                 initPredator(augmentaManager.newestObject.id);
@@ -790,7 +794,7 @@
                             boundingBoxes[augmentaManager.oldestObject.id].init();
                         }
 
-                        if (displayPredators) {
+                        if (displayObjects) {
                             removePredator(augmentaObject);
                             if (augmentaManager.augmentaScene.objCount !== 0) {
                                 initPredator(augmentaManager.newestObject.id);
@@ -829,7 +833,7 @@
                     }
 
                     // clean scene if display predators is enabled
-                    if(displayPredators) {
+                    if(displayObjects) {
                         for (var id in predators) {
                             removePredator(augmentaManager.augmentaObjects[id]);
                         }
@@ -837,17 +841,47 @@
                 }
 
 				let fusionUpdated = () => {
+
+					if(!isSceneInitialized) {
+
+						autoComputeOffset = fusionOutputController.autoComputeOffset;
+						
+						fusionOutputController.offsetX = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
+						fusionOutputController.offsetY = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
+						gui.updateDisplay()
+
+						// Update Offset
+						fuOffsetX = fusionOutputController.offsetX;
+						fuOffsetY = fusionOutputController.offsetY;
+
+						if (autoComputeOffset) {
+							changeFusionOffset();
+						}
+
+						if(useFusionPresets) {
+							// Update Size
+							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
+							fuHeight = augmentaManager.fusion.videoOutInPixels.y;
+
+							windowHalfX = fuWidth / 2;
+							windowHalfY = fuHeight / 2;
+
+							camera.aspect = fuWidth / fuHeight;
+							camera.updateProjectionMatrix();
+
+							// Set offset and size
+							renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
+						}
+
+						isSceneInitialized = true;
+					}
 					if(useFusionPresets) {
-						if(fuWidth != augmentaManager.fusion.videoOutInPixels.x || fuHeight != augmentaManager.fusion.videoOutInPixels.y || 
-							fuOffsetX != augmentaManager.fusion.offsetX || fuOffsetY != augmentaManager.fusion.offsetY) {
+						if(fuWidth != augmentaManager.fusion.videoOutInPixels.x || fuHeight != augmentaManager.fusion.videoOutInPixels.y) 
+						{
 							
 							// Update Size
 							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
                             fuHeight = augmentaManager.fusion.videoOutInPixels.y;
-                        
-                            // Update Offset
-                            fuOffsetX = augmentaManager.fusion.offsetX;
-                            fuOffsetY = augmentaManager.fusion.offsetY;
 
 							windowHalfX = fuWidth / 2;
 				            windowHalfY = fuHeight / 2;
@@ -919,9 +953,9 @@
 					port: 8080,
 					ip: '127.0.0.1',
 					useSecureConnection: false,
-                    displayMode: "Oldest Object",
+                    displayMode: "All Objects",
                     enableDebugMode: false,
-                    displayPredators: false
+                    displayObjects: false
 				};
 
 				
@@ -959,7 +993,7 @@
 
                         }
 
-                        if (displayPredators) {
+                        if (displayObjects) {
 
                             for (var id in predators) {
                                 removePredator(augmentaManager.augmentaObjects[id]);
@@ -987,7 +1021,7 @@
 
                         }
 
-                        if (displayPredators) {
+                        if (displayObjects) {
 
                             for (var id in predators) {
                                 removePredator(augmentaManager.augmentaObjects[id]);
@@ -1013,7 +1047,7 @@
 
                         }
 
-                        if (displayPredators) {
+                        if (displayObjects) {
 
                             for (var id in predators) {
                                 removePredator(augmentaManager.augmentaObjects[id]);
@@ -1028,9 +1062,9 @@
                 //  Enable or disable display predators mode
                 const predatorChanger = function () {
 
-                    displayPredators = augmentaController.displayPredators;
+                    displayObjects = augmentaController.displayObjects;
 
-                    if (displayPredators) {
+                    if (displayObjects) {
 
                         if (mode == "All Objects") {
 
@@ -1099,7 +1133,7 @@
 				augmentaFolder.add( augmentaController, 'port', 8080).onChange( auChanger );
 				augmentaFolder.add( augmentaController, 'useSecureConnection', false).onChange( auChanger );
                 augmentaFolder.add( augmentaController, 'displayMode', ["Oldest Object", "Newest Object", "All Objects"]).onChange( displayChanger );
-                augmentaFolder.add( augmentaController, 'displayPredators', false).onChange( predatorChanger );
+                augmentaFolder.add( augmentaController, 'displayObjects', false).onChange( predatorChanger );
                 augmentaFolder.add( augmentaController, 'enableDebugMode', false).onChange( debugModeChanger );
 
 
@@ -1108,10 +1142,10 @@
 				const fusionOutputFolder = gui.addFolder('Fusion output');
 
 				const fusionOutputController = {
-					fusionPresets: false,
+					fusionPresets: true,
 					offsetX: 0,
 					offsetY: 0,
-					autoComputeOffset: false
+					autoComputeOffset: true
 				};
 
                 // Enable or disable fusion presets for output video
@@ -1165,10 +1199,6 @@
 							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
 							fuHeight = augmentaManager.fusion.videoOutInPixels.y;
 
-							
-							augmentaManager.fusion.offsetX = fuOffsetX;
-							augmentaManager.fusion.offsetY = fuOffsetY;
-
 							windowHalfX = fuWidth / 2;
 							windowHalfY = fuHeight / 2;
 
@@ -1181,6 +1211,8 @@
 				} 
 
 				const computeOffset = function() {
+
+					autoComputeOffset = fusionOutputController.autoComputeOffset;
 					
 					fusionOutputController.offsetX = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
 					fusionOutputController.offsetY = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
@@ -1190,13 +1222,13 @@
 					fuOffsetX = fusionOutputController.offsetX;
 					fuOffsetY = fusionOutputController.offsetY;
 
-					if (fusionOutputController.autoComputeOffset) {
+					if (autoComputeOffset) {
 						changeFusionOffset();
 					}
 				}
 
-				fusionOutputFolder.add( fusionOutputController, 'fusionPresets', false).onChange( fusionPresets );
-				fusionOutputFolder.add( fusionOutputController, 'autoComputeOffset', false).onChange( computeOffset );
+				fusionOutputFolder.add( fusionOutputController, 'fusionPresets', true).onChange( fusionPresets );
+				fusionOutputFolder.add( fusionOutputController, 'autoComputeOffset', true).onChange( computeOffset );
 				fusionOutputFolder.add( fusionOutputController, 'offsetX', 0).onChange( changeFusionOffset );
 				fusionOutputFolder.add( fusionOutputController, 'offsetY', 0).onChange( changeFusionOffset );
 
@@ -1384,22 +1416,15 @@
 
 			function onWindowResize() {
 
-                if (!useFusionPresets && !manualMode) 
-                {
-				    windowHalfX = window.innerWidth / 2;
-				    windowHalfY = window.innerHeight / 2;
+				windowHalfX = window.innerWidth / 2;
+			    windowHalfY = window.innerHeight / 2;
 
-				    camera.aspect = window.innerWidth / window.innerHeight;
-				    camera.updateProjectionMatrix();
+			    camera.aspect = window.innerWidth / window.innerHeight;
+			    camera.updateProjectionMatrix();
 
-				    renderer.setSize( window.innerWidth, window.innerHeight );
-
-                } else if (useFusionPresets && autoComputeOffset) {
-
-					computeOffset();
-					console.log("resized")
-
-               }
+			    renderer.setSize( window.innerWidth, window.innerHeight );
+               
+				isSceneInitialized = false;
 
 			}
 
@@ -1432,8 +1457,8 @@
 
 				velocityUniforms[ 'predator' ].value.set( 0.5 * mouseX / windowHalfX, - 0.5 * mouseY / windowHalfY, 0 );
 
-				//mouseX = 10000;
-				//mouseY = 10000;
+				mouseX = 10000;
+				mouseY = 10000;
 
 				gpuCompute.compute();
 
