@@ -1,8 +1,22 @@
 # Augmenta-js
 
+A [Javascript](https://developer.mozilla.org/fr/docs/Web/JavaScript) library for [Augmenta Tracking](https://augmenta-tech.com/) using [Websocket](https://developer.mozilla.org/fr/docs/Web/API/WebSockets_API), created by [Théoriz Studio](https://www.theoriz.com/fr/bienvenue/).
+
 ## Demo
 
 Try the live examples [here](https://augmenta-tech.github.io/Augmenta-js/)
+
+## Examples 
+
+To run the examples you can run them locally on a web server for local development such as [Servez](https://greggman.github.io/servez/) and open the repo's folder.
+
+There is two examples : a very simple one using no other librairies than this one, and a more complex example adapted from a [three js example](https://threejs.org/examples/?q=gpgp#webgl_gpgpu_birds).
+- Augmenta-js/Simple Example/simpleExample.html
+- Augmenta-js/three js example/examples/webgl_gpgpu_bird.html 
+
+
+![flocking_1](https://user-images.githubusercontent.com/64955193/138885250-88a95bab-3b4b-487a-a001-5e674ea2b7d7.gif)
+
 
 ## Documentation
   
@@ -120,11 +134,3 @@ To know the pixel density in width and height.
 augmentaManager.getObjectRelativePosition(oid)
 ```
 To get an object's relative position in the scene. Returns a ```vec2```.  
-  
-## Examples 
-  
-To run the examples you can run them locally on a web server for local development such as [Servez](https://greggman.github.io/servez/) and open the repo's folder.
-
-There is two examples : a very simple one using no other librairies than this one, and a more complex example adapted from a [three js example](https://threejs.org/examples/?q=gpgp#webgl_gpgpu_birds).
-- Augmenta-js/Simple Example/simpleExample.html
-- Augmenta-js/three js example/examples/webgl_gpgpu_bird.html 
