@@ -442,12 +442,12 @@
                     let c = Math.cos(theta);
                     
                     // bb center
-                    let x = (augmentaObject.boundingRect.x - 0.5) * windowHalfX;
-                    let y = - (augmentaObject.boundingRect.y - 0.5) * windowHalfY;
+					let x = (augmentaObject.boundingRect.x - 0.5) * sceneWidth;
+                	let y = - 2*(augmentaObject.boundingRect.y - 0.5) * sceneHeight;
 
                     // bb size
-                    let w = augmentaObject.boundingRect.width * windowHalfX;
-                    let h = augmentaObject.boundingRect.height * windowHalfY;
+                    let w = augmentaObject.boundingRect.width * sceneWidth;
+                    let h = augmentaObject.boundingRect.height * sceneHeight;
                     
                     //vertex
                     this.points.push( new THREE.Vector3( (w/2)*c - (h/2)*s + x , (w/2)*s + (h/2)*c + y ) , 0);
@@ -475,12 +475,12 @@
                     let c = Math.cos(theta);
 
                     // bb center
-                    let x = (augmentaObject.boundingRect.x - 0.5) * windowHalfX;
-                    let y = - (augmentaObject.boundingRect.y - 0.5) * windowHalfY;
+                    let x = (augmentaObject.boundingRect.x - 0.5) * sceneWidth;
+                    let y = - (augmentaObject.boundingRect.y - 0.5) * sceneHeight;
 
                     // bb size
-                    let w = augmentaObject.boundingRect.width * windowHalfX;
-                    let h = augmentaObject.boundingRect.height * windowHalfY;
+                    let w = augmentaObject.boundingRect.width * sceneWidth;
+                    let h = augmentaObject.boundingRect.height * sceneHeight;
 
                     
                     this.points[0] = new THREE.Vector3( (w/2)*c - (h/2)*s + x , (w/2)*s + (h/2)*c + y , 0 );
@@ -516,8 +516,8 @@
 
             function updatePredator(augmentaObject) {
 
-                let x = (augmentaObject.boundingRect.x - 0.5) * windowHalfX;
-                let y = - (augmentaObject.boundingRect.y - 0.5) * windowHalfY;
+                let x = (augmentaObject.centroid.x - 0.5) * sceneWidth;
+                let y = - (augmentaObject.centroid.y - 0.5) * sceneHeight;
                 predators[augmentaObject.id].position.set( x , y , 0 );
 
             }
@@ -540,19 +540,26 @@
 			let camera, scene, renderer;
 			let mouseX = 1000, mouseY = 1000;
 
-			let windowHalfX = window.innerWidth / 2;
-			let windowHalfY = window.innerHeight / 2;
+			///// Camera and scene info
+			let sceneWidth = window.innerWidth;
+			let sceneHeight = window.innerHeight;
+			let sceneOffsetX = 0;
+			let sceneOffsetY = 0;
 
-            let fuWidth, fuHeight;
-            let fuOffsetX = 0, fuOffsetY = 0;
+			let windowHalfX = sceneWidth / 2;
+			let windowHalfY = sceneHeight / 2;
+
+			//// Display scene info
+            // let fuWidth, fuHeight;
+            // let fuOffsetX = 0, fuOffsetY = 0;
 			let autoComputeOffset = true;
 			let useFusionPresets = true;
 
-			let isSceneInitialized = false; // first fusion msg
+            // let manualWidth = window.innerWidth, manualHeight = window.innerHeight;
+            // let manualOffsetX = 0, manualOffsetY = 0;
+            let manualMode = false;
 
-            let manualWidth = window.innerWidth, manualHeight = window.innerHeight;
-            let manualOffsetX = 0, manualOffsetY = 0;
-            let manualMode = false;  
+			let isSceneInitialized = false; // first fusion msg
 
 			const BOUNDS = 800, BOUNDS_HALF = BOUNDS / 2;
 
@@ -592,7 +599,6 @@
 				camera.position.z = 350;
 
 				scene = new THREE.Scene();
-				// scene.background = new THREE.Color( 0xffffff );
 				scene.background = new THREE.Color( 0x111111 );
 				scene.fog = new THREE.Fog( 0xffffff, 100, 1000 );
 
@@ -602,6 +608,39 @@
 				container.appendChild( renderer.domElement );
 
 				initComputeRenderer();
+
+				//// FOR SCENE UPDATE ////
+
+				function updateScene() {
+
+					if (!useFusionPresets && !manualMode) {
+						// update scene info
+						sceneWidth = window.innerWidth;
+						sceneHeight = window.innerHeight;
+
+						sceneOffsetX = 0;
+						sceneOffsetY = 0;
+					} else if (useFusionPresets && autoComputeOffset) {
+
+						sceneOffsetX = (window.innerWidth - sceneWidth) / 2;
+						sceneOffsetY = (window.innerHeight - sceneHeight) / 2;
+
+						fusionOutputController.offsetX = sceneOffsetX;
+						fusionOutputController.offsetY = sceneOffsetY;
+						gui.updateDisplay()
+					}
+
+					windowHalfX = sceneWidth / 2;
+			    	windowHalfY = sceneHeight / 2;
+
+					camera.fov = (180/ 3.14) * 2.0 * Math.atan(sceneHeight / (350*2));
+			    	camera.aspect = sceneWidth / sceneHeight;
+			    	camera.updateProjectionMatrix();
+
+					renderer.setViewport(sceneOffsetX, sceneOffsetY, sceneWidth, sceneHeight);
+
+					isSceneInitialized = true;
+				}
 
                 ////// AUGMENTA MANAGER //////
 
@@ -621,8 +660,8 @@
                     if (mode == "All Objects") {
                         
                         // To scare birds
-                        mouseX = (augmentaObject.boundingRect.x - 0.5) * windowHalfX;
-                        mouseY = - (augmentaObject.boundingRect.y - 0.5) * windowHalfY;
+                        mouseX = (augmentaObject.centroid.x - 0.5) * sceneWidth;
+                        mouseY = (augmentaObject.centroid.y - 0.5) * sceneHeight;
                         
                         if (displayObjects) {
                             if (predators[augmentaObject.id] !== undefined) {
@@ -638,8 +677,8 @@
 
                     } else if (mode == "Newest Object" && augmentaObject.id == augmentaManager.newestObject.id ) {
 
-                        mouseX = (augmentaObject.boundingRect.x - 0.5) * windowHalfX;
-                        mouseY = - (augmentaObject.boundingRect.y - 0.5) * windowHalfY;
+                        mouseX = (augmentaObject.centroid.x - 0.5) * sceneWidth;
+                        mouseY = (augmentaObject.centroid.y - 0.5) * sceneHeight;
 
                         if (displayObjects) {
                             if (predators[augmentaObject.id] !== undefined) {
@@ -660,8 +699,8 @@
 
                     } else if (mode == "Oldest Object" && augmentaObject.id == augmentaManager.oldestObject.id ) {
 
-                        mouseX = (augmentaObject.boundingRect.x - 0.5) * windowHalfX;
-                        mouseY = - (augmentaObject.boundingRect.y - 0.5) * windowHalfY;
+                        mouseX = (augmentaObject.centroid.x - 0.5) * sceneWidth;
+                        mouseY = (augmentaObject.centroid.y - 0.5) * sceneHeight;
 
                         if (displayObjects) {
                             if (predators[augmentaObject.id] !== undefined) {
@@ -842,51 +881,14 @@
 
 				let fusionUpdated = () => {
 
-					if(!isSceneInitialized) {
+					if((!isSceneInitialized && useFusionPresets) || (useFusionPresets && (sceneWidth != augmentaManager.fusion.videoOutInPixels.x || sceneHeight != augmentaManager.fusion.videoOutInPixels.y))) {
+						// Update Size
+						sceneWidth = augmentaManager.fusion.videoOutInPixels.x;
+                        sceneHeight = augmentaManager.fusion.videoOutInPixels.y;
 
-						autoComputeOffset = fusionOutputController.autoComputeOffset;
-
-						// Init Offset
-						fuOffsetX = fusionOutputController.offsetX;
-						fuOffsetY = fusionOutputController.offsetY;
-
-						if (autoComputeOffset) {
-
-							fusionOutputController.offsetX = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
-							fusionOutputController.offsetY = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
-							gui.updateDisplay()
-
-							// Update Offset
-							fuOffsetX = fusionOutputController.offsetX;
-							fuOffsetY = fusionOutputController.offsetY;
-
-							changeFusionOffset();
-						}
-
-						fusionPresets();
-
-						isSceneInitialized = true;
-					}
-					if(useFusionPresets) {
-						if(fuWidth != augmentaManager.fusion.videoOutInPixels.x || fuHeight != augmentaManager.fusion.videoOutInPixels.y) 
-						{
-							
-							// Update Size
-							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
-                            fuHeight = augmentaManager.fusion.videoOutInPixels.y;
-
-							windowHalfX = fuWidth / 2;
-				            windowHalfY = fuHeight / 2;
-
-				            camera.aspect = fuWidth / fuHeight;
-				            camera.updateProjectionMatrix();
-
-                            // Set offset and size
-			                renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
-							// renderer.setSize( fuWidth, fuHeight );
-
-							console.log("fusion updated!")
-						}
+						windowHalfX = sceneWidth / 2;
+				        windowHalfY = sceneHeight / 2;
+						updateScene();
 					}
 				}
 			
@@ -911,19 +913,38 @@
 				container.addEventListener( 'pointerenter', onPointerEnter );
 				container.addEventListener( 'pointerleave', onPointerLeave );
 
+				function onWindowResize() {
+
+					camera.fov = (180/ 3.14) * 2.0 * Math.atan(window.innerHeight / (350*2));
+			    	camera.aspect = window.innerWidth / window.innerHeight;
+			    	camera.updateProjectionMatrix();
+
+					renderer.setSize(window.innerWidth, window.innerHeight);
+
+					if (!useFusionPresets && !manualMode) {
+						sceneWidth = window.innerWidth;
+						sceneHeight = window.innerHeight;
+					}
+
+					isSceneInitialized = false;
+
+				}
+
                 /////// Controllers and UI ///////
 
 				const gui = new GUI();
 
-				GUI.TEXT_OPEN = " ";
+				GUI.TEXT_OPEN = "";
 				GUI.TEXT_CLOSED = "Close Controls";
 
 				function onPointerEnter() {
-					gui.__closeButton.innerText = "Open Controls";
+					document.getElementById("info").style.display = "block";
+					if ( gui.__closeButton.innerText == "" ) gui.__closeButton.innerText = "Open Controls";
 				}
 
 				function onPointerLeave() {
-					gui.__closeButton.innerText = "";
+					document.getElementById("info").style.display = "none";
+					if (gui.__closeButton.innerText == "Open Controls") gui.__closeButton.innerText = "";
 				}
 
 				const effectFolder = gui.addFolder('Effect');
@@ -949,18 +970,6 @@
 				effectFolder.add( effectController, 'separation', 0.0, 100.0, 1.0 ).onChange( valuesChanger );
 				effectFolder.add( effectController, 'alignment', 0.0, 100, 0.001 ).onChange( valuesChanger );
 				effectFolder.add( effectController, 'cohesion', 0.0, 100, 0.025 ).onChange( valuesChanger );
-
-				/////// AUGMENTA INFO ///////
-
-				const augmentaInfo = gui.addFolder('Info');
-
-				const info = {
-					connected: false
-				}
-
-				let controller = augmentaInfo.add( info , 'connected', false);
-
-				// gui.__folders['info'].__controllers[0].domElement.hidden = true;
 
                 /////// AUGMENTA CONTROLLER ///////
 
@@ -1173,74 +1182,35 @@
 						useFusionPresets = fusionOutputController.fusionPresets;
 
 						if (useFusionPresets) {
-
 							// Update Size
-							fuWidth = augmentaManager.fusion.videoOutInPixels.x;
-							fuHeight = augmentaManager.fusion.videoOutInPixels.y;
-						
-							// Update Offset
-							fuOffsetX = fusionOutputController.offsetX;
-							fuOffsetY = fusionOutputController.offsetY;
+							sceneWidth = augmentaManager.fusion.videoOutInPixels.x;
+							sceneHeight = augmentaManager.fusion.videoOutInPixels.y;
 
-							windowHalfX = fuWidth / 2;
-							windowHalfY = fuHeight / 2;
+							sceneOffsetX = fusionOutputController.offsetX;
+							sceneOffsetY = fusionOutputController.offsetY;
 
-							camera.aspect = fuWidth / fuHeight;
-							camera.updateProjectionMatrix();
-
-							// Set offset and size
-							renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
-							// renderer.setSize( fuWidth, fuHeight );
-
-						} else {
-
-							windowHalfX = window.innerWidth / 2;
-							windowHalfY = window.innerHeight / 2;
-
-							camera.aspect = window.innerWidth / window.innerHeight;
-							camera.updateProjectionMatrix();
-
-							renderer.setSize( window.innerWidth, window.innerHeight );
-						}
+							manualMode = false;
+						} 
 					}
+					updateScene();
 				}
 
 				const changeFusionOffset = function() {
 
 					// Update Offset
-					fuOffsetX = fusionOutputController.offsetX;
-					fuOffsetY = fusionOutputController.offsetY;
-
 					if (useFusionPresets) {
-						// Update Size
-						fuWidth = augmentaManager.fusion.videoOutInPixels.x;
-						fuHeight = augmentaManager.fusion.videoOutInPixels.y;
-
-						windowHalfX = fuWidth / 2;
-						windowHalfY = fuHeight / 2;
-
-						camera.aspect = fuWidth / fuHeight;
-						camera.updateProjectionMatrix();
-
-						// Set offset and size
-						renderer.setViewport(fuOffsetX, fuOffsetY, fuWidth, fuHeight);
-						// renderer.setSize( fuWidth, fuHeight );
+						sceneOffsetX = fusionOutputController.offsetX;
+						sceneOffsetY = fusionOutputController.offsetY;
 					}
+
+					updateScene();
 				}
 
 				const computeOffset = function() {
 
 					autoComputeOffset = fusionOutputController.autoComputeOffset;
 
-					if (autoComputeOffset) {
-
-						// update UI
-						fusionOutputController.offsetX = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
-						fusionOutputController.offsetY = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
-						gui.updateDisplay()
-
-						changeFusionOffset();
-					}
+					updateScene();
 				}
 
 				fusionOutputFolder.add( fusionOutputController, 'fusionPresets', true).onChange( fusionPresets );
@@ -1263,47 +1233,26 @@
                 const manualModeChanger = function () 
                 {
                     manualMode = customOutputController.manualOutput;
-                    if (manualMode) {
-                        renderer.setViewport(manualOffsetX,window.innerHeight - manualOffsetY - manualHeight, manualWidth, manualHeight);
-                    } else if (isConnected) {
-                        fusionPresets();
-                    } else {
+					
+					if(manualMode && !useFusionPresets) {
+						sceneWidth = customOutputController.width;
+						sceneHeight = customOutputController.height;
 
-            			windowHalfX = window.innerWidth / 2;
-				        windowHalfY = window.innerHeight / 2;
-
-				        camera.aspect = window.innerWidth / window.innerHeight;
-				        camera.updateProjectionMatrix();
-
-				        renderer.setSize( window.innerWidth, window.innerHeight );
-                    }
-                }
-
-                const outputChanger = function () 
-                {                    
-                    manualOffsetX = customOutputController.offsetX;
-                    manualOffsetY = customOutputController.offsetY;
-                    
-                    manualWidth = customOutputController.width;
-                    manualHeight = customOutputController.height;
-
-                    if (manualMode) {
-                        // Set offset
-			            renderer.setViewport(manualOffsetX,window.innerHeight - manualOffsetY - manualHeight, manualWidth, manualHeight);
-                    }
+						sceneOffsetX = customOutputController.offsetX;
+                    	sceneOffsetY = window.innerHeight - customOutputController.offsetY - sceneHeight;
+					}
+					updateScene()
                 }
 
                 customOutputFolder.add( customOutputController, 'manualOutput', false).onChange( manualModeChanger );
-                customOutputFolder.add( customOutputController, 'offsetX', 0).onChange( outputChanger );
-                customOutputFolder.add( customOutputController, 'offsetY', 0).onChange( outputChanger );
-                customOutputFolder.add( customOutputController, 'width', 0).onChange( outputChanger );
-                customOutputFolder.add( customOutputController, 'height', 0).onChange( outputChanger );
+                customOutputFolder.add( customOutputController, 'offsetX', 0).onChange( manualModeChanger );
+                customOutputFolder.add( customOutputController, 'offsetY', 0).onChange( manualModeChanger );
+                customOutputFolder.add( customOutputController, 'width', 0).onChange( manualModeChanger );
+                customOutputFolder.add( customOutputController, 'height', 0).onChange( manualModeChanger );
 
 				gui.close();
 
 				initBirds();
-
-				gui.__folders["Info"].__controllers[0].domElement.hidden = true;
 			}
 
 			function initComputeRenderer() {
@@ -1429,20 +1378,6 @@
 					theArray[ k + 3 ] = 1;
 
 				}
-
-			}
-
-			function onWindowResize() {
-
-				windowHalfX = window.innerWidth / 2;
-			    windowHalfY = window.innerHeight / 2;
-
-			    camera.aspect = window.innerWidth / window.innerHeight;
-			    camera.updateProjectionMatrix();
-
-			    renderer.setSize( window.innerWidth, window.innerHeight );
-               
-				isSceneInitialized = false;
 
 			}
 
