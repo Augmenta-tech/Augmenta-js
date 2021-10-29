@@ -18,15 +18,15 @@
 	<body>
 
 		<div id="info">
-			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - webgl gpgpu birds<br />
+			<a href="https://threejs.org" target="_blank"> three.js</a> - webgl gpgpu birds<br />
 			<strong>Status: </strong><span id="connectionstatus">Disconnected</span> <br />
-			<a href="../../index.html">Back to main page</a>
+			<a href="../../index.html" target="blank">Back to main page</a>
 		</div>
 
 		<!--
 		TODO: If you're reading this, you may wish to improve this example by
 			- Create a better shading for the birds?
-
+			- Better interraction for multiples predators ?
 		-->
 
 		<!-- shader for bird's position -->
@@ -875,7 +875,7 @@
                 /////// Event listeners ///////
 
 				window.addEventListener( 'resize', onWindowResize );
-                container.style.touchAction = 'active';
+                // container.style.touchAction = 'none';
 				container.addEventListener( 'pointerenter', onPointerEnter );
 				container.addEventListener( 'pointerleave', onPointerLeave );
 

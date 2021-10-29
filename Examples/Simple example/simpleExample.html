@@ -27,10 +27,7 @@
         <p><a href="../../index.html">Back to main page</a></p>
 
         <label><strong>IP:</strong></label>
-        <input type="number" id="ip1" value="127" style="height:20px;width:50px" />
-        <input type="number" id="ip2" value="0" style="height:20px;width:50px" />
-        <input type="number" id="ip3" value="0" style="height:20px;width:50px" />
-        <input type="number" id="ip4" value="1" style="height:20px;width:50px" />
+        <input type="text" id="ip" value="127.0.0.1" style="height:20px;width:100px" />
 
         <label><strong>Port:</strong></label>
         <input type="number" id="port" value="8080" style="height:20px;width:60px" />
@@ -121,9 +118,6 @@
         canvas.style.left = "0px";
         canvas.style.top = "0px";
         var ctx = canvas.getContext("2d");
-
-        // let container = document.createElement( 'controls' );
-		// document.body.appendChild( container );
 
         /** Output properties */
 
@@ -257,7 +251,7 @@
             ctx.clearRect(0,0,canvas.width,canvas.height);
             bgDisplayed = false;
 
-            ip = document.getElementById("ip1").value + '.' + document.getElementById("ip2").value + '.' + document.getElementById("ip3").value + '.' +document.getElementById("ip4").value;
+            ip = document.getElementById("ip").value;
             port = document.getElementById("port").value;
             useSecureConnection = document.getElementById("useSecureConnection").checked;
             
@@ -266,10 +260,7 @@
         }
 
         document.getElementById("port").addEventListener('input', resetConnection)
-        document.getElementById("ip1").addEventListener('input', resetConnection)
-        document.getElementById("ip2").addEventListener('input', resetConnection)
-        document.getElementById("ip3").addEventListener('input', resetConnection)
-        document.getElementById("ip3").addEventListener('input', resetConnection)
+        document.getElementById("ip").addEventListener('input', resetConnection)
         document.getElementById("useSecureConnection").addEventListener('click', resetConnection)
 
         /** Switch display mode */
