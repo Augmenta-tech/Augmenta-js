@@ -10,13 +10,15 @@ Try the live examples [here](http://augmenta-js.augmenta.tech/)
 
 ## Examples 
 
-To run the examples you can run them locally on a web server for local development such as [Servez](https://greggman.github.io/servez/) and open the repo's folder.
+To run the examples you can click [here](http://augmenta-js.augmenta.tech/) or run them locally on a web server for local development such as [Servez](https://greggman.github.io/servez/) and open the repo's folder.
 
 There is two examples : a very simple one using no other librairies than this one, and a more complex example adapted from a [three js example](https://threejs.org/examples/?q=gpgp#webgl_gpgpu_birds).
 - Augmenta-js/Simple Example/simpleExample.html
 - Augmenta-js/three js example/examples/webgl_gpgpu_bird.html 
 
-**Note :** If you run AugmentaFusion and the examples on a local server (such as [Servez](https://greggman.github.io/servez/)) on the same computer you will be able to use both secure connection and regular connection. However - as AugmentaFusion is not able to send secure connection to browsers - if you want to run the examples on a different computer you will have to set your local server in http instead of https. You will also have to make sure secure connections are disabled on both client (these examples or your own example) and server (AugmentaFusion) sides. If you want to try the examples on the github page you will just have to disbale secure connections in the example interface and in AugmentaFusion ([the github page](https://augmenta-tech.github.io/Augmenta-js/) is set in http by default for that matter).
+> **Important note :** 
+> 
+> If you run AugmentaFusion and the examples on a local server (such as [Servez](https://greggman.github.io/servez/)) on the same computer you will be able to use both secure connection and regular connection. However - as AugmentaFusion is not able to send secure connection to browsers - if you want to run the examples on a different computer you will have to set your local server in http instead of https. You will also have to make sure secure connections are disabled on both client (these examples or your own example) and server (AugmentaFusion) sides. If you want to try the examples on the github page you will just have to disbale secure connections in the example interface and in AugmentaFusion ([the github page](https://augmenta-tech.github.io/Augmenta-js/) is set in http by default for that matter).
 
 ## Documentation
   
