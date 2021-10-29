@@ -12,6 +12,10 @@
             margin-bottom: 0.5em;
         }
 
+        canvas {
+            z-index:-1;
+        }
+
     </style>
 
 </head>
@@ -20,16 +24,16 @@
 
     <div id="controls">
 
+        <p><a href="../../index.html">Back to main page</a></p>
+
         <label><strong>IP:</strong></label>
         <input type="number" id="ip1" value="127" style="height:20px;width:50px" />
         <input type="number" id="ip2" value="0" style="height:20px;width:50px" />
         <input type="number" id="ip3" value="0" style="height:20px;width:50px" />
         <input type="number" id="ip4" value="1" style="height:20px;width:50px" />
-        <button type="button" id="ipbutton"> apply </button> 
 
         <label><strong>Port:</strong></label>
         <input type="number" id="port" value="8080" style="height:20px;width:60px" />
-        <button type="button" id="portbutton"> apply </button>
 
         <label for="use secure connection"> <strong> Use secure connection : </strong> </label> 
         <input type="checkbox" id="useSecureConnection" name="use secure connection">
@@ -62,26 +66,8 @@
 
         <span class="brsmall"></span>
 
-        <div>
-            <input type="checkbox" id="fusion output" name="fusion output" checked>
-            <label for="fusion output"> <strong> Fusion output : </strong> </label> 
-
-            Size : <span id="fuSize">0 x 0 px,</span>
-
-            <label>Offset : </label>
-            <input type="number" id="fuOffsetX" value="0" style="height:20px;width:50px" />
-            <input type="number" id="fuOffsetY" value="0" style="height:20px;width:50px" />
-
-            <input type="checkbox" id="compute offset" name="compute offset" checked> 
-            <label for="compute offset"> Centered </label> 
-        </div> 
-
-        <span class="brsmall"></span>
-        
-        <div>
-            <input type="checkbox" id="manual output" name="manual output">
-            <label for="manual output"> <strong> Manual output : </strong> </label> 
-
+        <div> 
+            <label><strong>Video Output : </strong></label>
             <label>Size : </label>
             <input type="number" id="width" value="1920" style="height:20px;width:50px" />
             <input type="number" id="height" value="1080" style="height:20px;width:50px" />
@@ -90,45 +76,83 @@
             <input type="number" id="offsetX" value="0" style="height:20px;width:50px" />
             <input type="number" id="offsetY" value="0" style="height:20px;width:50px" />
 
-            <button type="button" id="apply"> apply </button>
+            <input type="checkbox" id="compute offset" name="compute offset" checked> 
+            <label for="compute offset"> Center </label> 
+            <span class="brsmall"></span>
 
-        </div>      
+            <form name="output mode">
+                <div>
+                    <input type="radio" id="fusion" name="output mode" value="fusion"
+                        checked>
+                    <label for="fusion"> Fit to fusion output</label>
+                </div>
+    
+                <div>
+                    <input type="radio" id="window" name="output mode" value="window">
+                    <label for="window">Fit to window size</label>
+                </div>
+    
+                <div>
+                    <input type="radio" id="custom" name="output mode" value="custom">
+                    <label for="custom"> Custom size </label>
+                </div>
+            </form>
+
+        </div>
     </div>
 
     <span class="brsmall"></span>
 
     <canvas id="canvas" width="800" height="575"></canvas>
+    <!-- Cheat to be sure controls are displayed onPointerEnter -->
+    <canvas id="window" width="800" height="575"></canvas>
 
     <script type="module" id="main">
 
         import { AugmentaManager } from '../../Lib/augmentaManager.js'
 
+        var wholeWindow = document.getElementById("window");
+        wholeWindow.width = window.innerWidth;
+        wholeWindow.height = window.innerHeight;
+
         var canvas = document.getElementById("canvas");
-        canvas.width = window.innerWidth - 14;
-        canvas.height = window.innerHeight - 215;
-        canvas.style.left = "7px";
-        canvas.style.top = "205px";
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        canvas.style.left = "0px";
+        canvas.style.top = "0px";
         var ctx = canvas.getContext("2d");
+
+        // let container = document.createElement( 'controls' );
+		// document.body.appendChild( container );
+
+        /** Output properties */
+
+        let fusionOutput = true;
+        let useComputeOffset = true;
+        let fitToWindow = false;
+
+        let isBgInitialized = false;
+
+        let outputWidth, outputHeight;
+        let outputOffsetX, outputOffsetY;
+
+        let bgDisplayed = false;
+
+        /**
+         * 
+         * 
+         * SETUP AUGMENTA MANAGER
+         * 
+         * 
+         * */
 
         let ip = '127.0.0.1';
         let port = 8080;
         let isConnected = false; // Websocket connection's status
         let useSecureConnection;
 
-        let fusionOutput = true;
-        let manualOutput = false;
+        /** Functions triggered on augmenta messages in augmenta manager */
 
-        let isBgInitialized = false;
-
-        let useComputeOffset = true;
-        let fuWidth, fuHeight;
-
-        let manualWidth, manualHeight;
-        let manualOffsetX, manualOffsetY;
-
-        let bgDisplayed = false;
-
-        //set functions
         let objectUpdatedAll = (augmentaObject) => {
 
             drawBackground();
@@ -173,47 +197,35 @@
             connstatus.innerHTML = "Disconnected";
             ctx.clearRect(0,0,canvas.width,canvas.height);
             bgDisplayed = false;
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            canvas.style.left = "0px";
+            canvas.style.top = "0px";
+            isBgInitialized = false;
         }
 
         let fusionUpdated = () => {
 
-            if (useComputeOffset) {
-                computeOffset();
-            }
-
             if (!isBgInitialized) {
-                if(fusionOutput) {
-                    canvas.width = augmentaManager.fusion.videoOutInPixels.x;
-                    canvas.height = augmentaManager.fusion.videoOutInPixels.y;
-                    canvas.style.left = document.getElementById("fuOffsetX").value + 'px';
-                    canvas.style.top = document.getElementById("fuOffsetY").value + 'px';
-                    canvas.style.position = "absolute";
-                }
-
-                fuSize.innerHTML = canvas.width + " x " + canvas.height + " px,";
+                updateOutput();
                 isBgInitialized = true;
             }
 
             if (!bgDisplayed) {
-                drawBackground()
+                drawBackground();
+                bgDisplayed = true;
             }
 
             if (fusionOutput) {
-                if ( canvas.width != augmentaManager.fusion.videoOutInPixels.x || canvas.height != augmentaManager.fusion.videoOutInPixels.y 
-                || canvas.style.left != document.getElementById("fuOffsetX").value + 'px' || canvas.style.top != document.getElementById("fuOffsetY").value + 'px') 
+                if ( canvas.width != augmentaManager.fusion.videoOutInPixels.x || canvas.height != augmentaManager.fusion.videoOutInPixels.y )
                 {
-                    canvas.width = augmentaManager.fusion.videoOutInPixels.x;
-                    canvas.height = augmentaManager.fusion.videoOutInPixels.y;
-                    canvas.style.left = document.getElementById("fuOffsetX").value + 'px';
-                    canvas.style.top = document.getElementById("fuOffsetY").value + 'px';
-                    canvas.style.position = "absolute";
+                    updateOutput();
                     console.log("fusion was updated!");
                 }
             }
             
         }
-
-        // Augmenta Manager
 
         //Initialize augmenta manager
         let augmentaManager = new AugmentaManager();
@@ -231,85 +243,36 @@
         //Start websocket connection
         augmentaManager.startAugmentaWebsocket();
 
-        window.addEventListener( 'resize', onWindowResize );
+        /** 
+         * 
+         * 
+         * CONTROLS
+         * 
+         * 
+         *  */
 
-        function onWindowResize () {
+        /** Reset connection */ 
 
-            if (!fusionOutput && !manualOutput) {
-
-                canvas.width = window.innerWidth - 14;
-                canvas.height = window.innerHeight - 215;
-                canvas.style.left = "7px";
-                canvas.style.top = "205px";
-
-            } else if (fusionOutput && useComputeOffset) {
-                computeOffset();
-            }
-        }
-
-        document.addEventListener('keydown', onKeyDown);
-
-        function onKeyDown(e) {
-
-            if(e.key == "q" && event.ctrlKey && (fusionOutput || manualOutput)) {
-
-                fusionOutput = false; 
-                manualOutput = false;
-
-                document.getElementById("fusion output").checked = false;
-                document.getElementById("manual output").checked = false;
-
-                console.log("quit output mode")
-                canvas.width = window.innerWidth - 14;
-                canvas.height = window.innerHeight - 215;
-                canvas.style.left = "7px";
-                canvas.style.top = "205px";
-            } 
-            else if (e.key == "m" && event.ctrlKey) {
-                useComputeOffset = document.getElementById('compute offset').checked =  true;
-                computeOffset();
-            }
-        }
-
-        //Controls
-
-        function changePort() {
-
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            bgDisplayed = false;
-
-            port = document.getElementById("port").value;
-
-            augmentaManager.changePort(port);
-
-        }
-        document.getElementById('portbutton').addEventListener('click', changePort)
-
-        function changeIP() {
-
+        function resetConnection() {
             ctx.clearRect(0,0,canvas.width,canvas.height);
             bgDisplayed = false;
 
             ip = document.getElementById("ip1").value + '.' + document.getElementById("ip2").value + '.' + document.getElementById("ip3").value + '.' +document.getElementById("ip4").value;
-
-            augmentaManager.changeIP(ip);
-
-        }
-        document.getElementById('ipbutton').addEventListener('click', changeIP)
-
-        
-        function secureConnection() {
-
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            bgDisplayed = false;
-
+            port = document.getElementById("port").value;
             useSecureConnection = document.getElementById("useSecureConnection").checked;
-
-            augmentaManager.useSecureConnection = useSecureConnection;
-
+            
+            if (useSecureConnection) augmentaManager.websocketurl = "wss://" + ip + ":" + port;
+            else augmentaManager.websocketurl = "ws://" + ip + ":" + port;
         }
-        document.getElementById('useSecureConnection').addEventListener('click', secureConnection)
 
+        document.getElementById("port").addEventListener('input', resetConnection)
+        document.getElementById("ip1").addEventListener('input', resetConnection)
+        document.getElementById("ip2").addEventListener('input', resetConnection)
+        document.getElementById("ip3").addEventListener('input', resetConnection)
+        document.getElementById("ip3").addEventListener('input', resetConnection)
+        document.getElementById("useSecureConnection").addEventListener('click', resetConnection)
+
+        /** Switch display mode */
 
         var radios = document.forms["display mode"].elements["mode"];
         for(var i = 0, max = 3; i < max; i++) {
@@ -326,107 +289,170 @@
             }
         }
 
-        function applyFusionOutput() {
+        /** Functions and event listener ot manage canvas dimension */
 
-            ctx.clearRect(0,0,canvas.width,canvas.height);
-            bgDisplayed = false;
+        // update size of the canvas
+        function updateOutput () {
 
-            fusionOutput = document.getElementById("fusion output").checked ;
-
-            if (fusionOutput) {
-
-                // disable manual output if enabled
-                document.getElementById("manual output").checked = false;
-                manualOutput = false;
-
-                alert("Press ctrl + q to quit fusion output mode and ctrl + m to center the scene")
-
-            }
-            
-            if (fusionOutput && isConnected) {
-              
-                canvas.width = augmentaManager.fusion.videoOutInPixels.x;
-                canvas.height = augmentaManager.fusion.videoOutInPixels.y;
-                canvas.style.left = document.getElementById("fuOffsetX").value + 'px';
-                canvas.style.top = document.getElementById("fuOffsetY").value + 'px';
-                canvas.style.position = "absolute";
-
-            }
-
-        }
-        document.getElementById('fusion output').addEventListener('click', applyFusionOutput)
-
-        function computeOffset() {
-
+            // config
             useComputeOffset = document.getElementById('compute offset').checked;
 
+            // output size
+            if (fusionOutput && isConnected) {
+                // update values
+                outputWidth = augmentaManager.fusion.videoOutInPixels.x;
+                outputHeight = augmentaManager.fusion.videoOutInPixels.y;
+                // update ui
+                document.getElementById("width").value = outputWidth;
+                document.getElementById("height").value = outputHeight;
+            } else if (fitToWindow) {
+                // compute and update values
+                outputWidth = window.innerWidth;
+                outputHeight = window.innerHeight;
+                // update ui
+                document.getElementById("width").value = outputWidth;
+                document.getElementById("height").value = outputHeight;
+            } else {
+                // update values
+                outputWidth = document.getElementById('width').value;
+                outputHeight = document.getElementById('height').value;
+            } 
+
+            // output offset
             if (useComputeOffset) {
-
-                document.getElementById("fuOffsetX").value = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
-                document.getElementById("fuOffsetY").value = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
-
-                fuWidth = (innerWidth - augmentaManager.fusion.videoOutInPixels.x) / 2;
-                fuHeight = (innerHeight - augmentaManager.fusion.videoOutInPixels.y) / 2;
+                // compute and upadate values
+                outputOffsetX = parseInt((innerWidth - outputWidth) / 2);
+                outputOffsetY = parseInt((innerHeight - outputHeight) / 2);
+                // update ui
+                document.getElementById("offsetX").value = outputOffsetX;
+                document.getElementById("offsetY").value = outputOffsetY;
+            } else if (fitToWindow) { 
+                // update values
+                outputOffsetX = 0;
+                outputOffsetY = 0;
+                // update ui
+                document.getElementById("offsetX").value = outputOffsetX;
+                document.getElementById("offsetY").value = outputOffsetY;
+            }else {
+                // update values
+                outputOffsetX = document.getElementById('offsetX').value;
+                outputOffsetY = document.getElementById('offsetY').value;
             }
 
-        }
-        document.getElementById('compute offset').addEventListener('click', computeOffset)
 
-        function enableManualOutput() {
+            // update canvas dimension
+            canvas.width = outputWidth;
+            canvas.height = outputHeight;
+            canvas.style.left = outputOffsetX + 'px';
+            canvas.style.top = outputOffsetY + 'px';
+            canvas.style.position = "absolute";
 
-            manualOutput = document.getElementById("manual output").checked;
-
-            if (manualOutput) {
-
-                // disable fusion output if enabled
-                document.getElementById("fusion output").checked = false;
-                fusionOutput = false;
-
-                alert("Press ctrl + q to quit manual output mode")
-
-            }
-
-            
-        }
-        document.getElementById('manual output').addEventListener('click', enableManualOutput)
-
-        function applyManualOutput() {
-
-            ctx.clearRect(0,0,canvas.width,canvas.height);
             bgDisplayed = false;
 
-            manualWidth = document.getElementById('width').value;
-            manualHeight = document.getElementById('height').value;
-            manualOffsetX = document.getElementById('offsetX').value;
-            manualOffsetY = document.getElementById('offsetY').value;
-
-            console.log(manualWidth)
-
-            if (manualOutput) {
-              
-                canvas.width = manualWidth;
-                canvas.height = manualHeight;
-                canvas.style.left = manualOffsetX + 'px';
-                canvas.style.top = manualOffsetY + 'px';
-                canvas.style.position = "absolute";
-
-            }
-
         }
-        document.getElementById('apply').addEventListener('click', applyManualOutput)
 
+        // Event listeners
 
-        // Draw function
+        // Custom size
+        outputWidth = document.getElementById('width').addEventListener('input', updateOutput);
+        outputWidth = document.getElementById('height').addEventListener('input', updateOutput);
+        outputWidth = document.getElementById('offsetX').addEventListener('input', updateOutput);
+        outputWidth = document.getElementById('offsetY').addEventListener('input', updateOutput);
+        
+        // Window resize
+        window.addEventListener( 'resize', onWindowResize );
+
+        function onWindowResize() {
+            wholeWindow.width = window.innerWidth;
+            wholeWindow.height = window.innerHeight;
+            updateOutput();
+        }
+
+        // Mode 
+        document.getElementById('compute offset').addEventListener('click', updateOutput);
+
+        var radios = document.forms["output mode"].elements["output mode"];
+        for(var i = 0, max = 3; i < max; i++) {
+            radios[i].onclick = function() {
+                let outputMode = this.value;
+                console.log(outputMode);
+                if(outputMode == "fusion") {
+                    fusionOutput = true;
+                    fitToWindow = false;
+                    updateOutput()
+                } else if(outputMode == "window") {
+                    fusionOutput = false;
+                    fitToWindow = true;
+                    updateOutput();
+                } else if(outputMode == "custom") {
+                    fusionOutput = false;
+                    fitToWindow = false;
+                }
+            }
+        }
+
+        document.addEventListener('keydown', onKeyDown);
+
+        function onKeyDown(e) {
+
+            if(e.key == "q" && event.ctrlKey && fusionOutput) {
+
+                fusionOutput = false; 
+                fitToWindow = false;
+                useComputeOffset = false;
+
+                document.getElementById("fusion output").checked = false;
+                document.getElementById("compute offset").checked = false;
+                document.getElementById("fit to window").checked = false;
+
+                console.log("quit output mode");
+                updateOutput();
+            } 
+            else if (e.key == "m" && event.ctrlKey) {
+                useComputeOffset = document.getElementById('compute offset').checked =  true;
+                updateOutput();
+            }
+        }
+
+        /**
+         * 
+         * 
+         * HIDE / SHOW UI
+         * 
+         * 
+         * */
+        
+        document.body.addEventListener( 'pointerenter', onPointerEnter );
+		document.body.addEventListener( 'pointerleave', onPointerLeave );
+
+        function onPointerEnter() {
+			document.getElementById("controls").style.display = "block";
+		}
+
+		function onPointerLeave() {
+			document.getElementById("controls").style.display = "none";
+		}
+
+        /**
+         * 
+         * 
+         * DRAW
+         * 
+         * 
+         * */
+
+        /** Functions to draw background and objects on the canvas */
+
         function drawBackground() {
 
-            // clear canvas
+            // Clear canvas
             ctx.clearRect(0,0,canvas.width,canvas.height);
             bgDisplayed = false;
 
             let dx = canvas.width / augmentaManager.fusion.videoOut.x;
             let dy = canvas.height / augmentaManager.fusion.videoOut.y;
 
-            // background
+            // Draw background
             for (let i = 0; i < canvas.width; i += 2 * dx) {
                 for (let j = 0; j * dy < canvas.height; j+= 1) {
                     if(j%2 == 0) {
@@ -448,10 +474,6 @@
 
         function drawObject(object) {
 
-            // scene properties
-            let sceneWidth = augmentaManager.augmentaScene.scene.x;
-            let sceneHeight = augmentaManager.augmentaScene.scene.y;
-
             ctx.save();
 
             ctx.fillStyle = object.color;
@@ -472,10 +494,6 @@
 
         function drawObjectDebug (object) {
 
-            // scene properties
-            let sceneWidth = augmentaManager.augmentaScene.scene.x;
-            let sceneHeight = augmentaManager.augmentaScene.scene.y;
-
             ctx.save();
 
             let x = object.boundingRect.x * canvas.width;
@@ -487,9 +505,11 @@
             let s = Math.sin(theta);
             let c = Math.cos(theta);
 
+            // Draw centroid
             ctx.fillStyle = object.color;
             ctx.fillRect(object.centroid.x * canvas.width - 5,object.centroid.y * canvas.height - 5, 10, 10);
 
+            // Draw bounding box with rotation
             ctx.translate(x + (w/2)*c - (h/2)*s,y + (w/2)*s + (h/2)*c);
             ctx.rotate(theta);
 
@@ -502,6 +522,7 @@
             ctx.lineWidth = 5;
             ctx.strokeRect(-w,-h,w,h);
 
+            // Draw object info
             ctx.fillStyle = '#FFFFFF';
             ctx.font = "bold";
             ctx.textAlign ="center";
@@ -509,6 +530,8 @@
             ctx.fillText("ID: " + object.id + "  OID: " + object.oid, -w/2, -h/2);
 
             ctx.restore();
+
+            console.log(canvas.width)
 
         }
 

@@ -19,7 +19,8 @@
 
 		<div id="info">
 			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> - webgl gpgpu birds<br />
-			<strong>Status: </strong><span id="connectionstatus">Disconnected</span>
+			<strong>Status: </strong><span id="connectionstatus">Disconnected</span> <br />
+			<a href="../../index.html">Back to main page</a>
 		</div>
 
 		<!--
@@ -301,14 +302,9 @@
 
 			import * as THREE from './three.module.js'
 
-			//import { MeshLine, MeshLineMaterial, MeshLineRaycast } from './three.meshline';
-
 			import { GUI } from './dat.gui.module.js'
 
 			import { GPUComputationRenderer } from './GPUComputationRenderer.js'
-
-			//To be able to change line thickness
-			//import { MeshLineMaterial } from './THREE.MeshLine.js'
 
             //Websocket lib for augmenta
             import { AugmentaManager } from '../../Lib/augmentaManager.js'
@@ -388,11 +384,6 @@
 						const birdIndex = ~ ~ ( triangleIndex / trianglesPerBird );
 						const x = ( birdIndex % WIDTH ) / WIDTH;
 						const y = ~ ~ ( birdIndex / WIDTH ) / WIDTH;
-
-						// const c = new THREE.Color(
-						// 	0x444444 +
-						// 	~ ~ ( v / 9 ) / BIRDS * 0x666666
-						// );
 
 						const c = new THREE.Color(
 							0xFFFFFF +
@@ -539,6 +530,17 @@
 			let container, stats;
 			let camera, scene, renderer;
 			let mouseX = 1000, mouseY = 1000;
+			
+			const BOUNDS = 800, BOUNDS_HALF = BOUNDS / 2;
+
+			let last = performance.now();
+
+			let gpuCompute;
+			let velocityVariable;
+			let positionVariable;
+			let positionUniforms;
+			let velocityUniforms;
+			let birdUniforms;
 
 			///// Camera and scene info
 			let sceneWidth = window.innerWidth;
@@ -550,27 +552,12 @@
 			let windowHalfY = sceneHeight / 2;
 
 			//// Display scene info
-            // let fuWidth, fuHeight;
-            // let fuOffsetX = 0, fuOffsetY = 0;
 			let autoComputeOffset = true;
 			let useFusionPresets = true;
-
-            // let manualWidth = window.innerWidth, manualHeight = window.innerHeight;
-            // let manualOffsetX = 0, manualOffsetY = 0;
+			let fitToWindow = false;
             let manualMode = false;
 
 			let isSceneInitialized = false; // first fusion msg
-
-			const BOUNDS = 800, BOUNDS_HALF = BOUNDS / 2;
-
-			let last = performance.now();
-
-			let gpuCompute;
-			let velocityVariable;
-			let positionVariable;
-			let positionUniforms;
-			let velocityUniforms;
-			let birdUniforms;
 
 			//websocket address
             let ip = '127.0.0.1';
@@ -613,23 +600,6 @@
 
 				function updateScene() {
 
-					if (!useFusionPresets && !manualMode) {
-						// update scene info
-						sceneWidth = window.innerWidth;
-						sceneHeight = window.innerHeight;
-
-						sceneOffsetX = 0;
-						sceneOffsetY = 0;
-					} else if (useFusionPresets && autoComputeOffset) {
-
-						sceneOffsetX = (window.innerWidth - sceneWidth) / 2;
-						sceneOffsetY = (window.innerHeight - sceneHeight) / 2;
-
-						fusionOutputController.offsetX = sceneOffsetX;
-						fusionOutputController.offsetY = sceneOffsetY;
-						gui.updateDisplay()
-					}
-
 					windowHalfX = sceneWidth / 2;
 			    	windowHalfY = sceneHeight / 2;
 
@@ -648,10 +618,6 @@
                         
                 //get status element
 	            var connstatus = document.getElementById("connectionstatus");
-
-	            //get info div element
-	            var infodiv = document.getElementById("info");
-
 
                 ///// AUGMENTA EVENTS FUNCTIONS' DEFINITION /////
 
@@ -888,7 +854,7 @@
 
 						windowHalfX = sceneWidth / 2;
 				        windowHalfY = sceneHeight / 2;
-						updateScene();
+						updateOutput();
 					}
 				}
 			
@@ -909,24 +875,20 @@
                 /////// Event listeners ///////
 
 				window.addEventListener( 'resize', onWindowResize );
-                container.style.touchAction = 'none';
+                container.style.touchAction = 'active';
 				container.addEventListener( 'pointerenter', onPointerEnter );
 				container.addEventListener( 'pointerleave', onPointerLeave );
 
 				function onWindowResize() {
 
+					// Temp
 					camera.fov = (180/ 3.14) * 2.0 * Math.atan(window.innerHeight / (350*2));
 			    	camera.aspect = window.innerWidth / window.innerHeight;
 			    	camera.updateProjectionMatrix();
 
 					renderer.setSize(window.innerWidth, window.innerHeight);
 
-					if (!useFusionPresets && !manualMode) {
-						sceneWidth = window.innerWidth;
-						sceneHeight = window.innerHeight;
-					}
-
-					isSceneInitialized = false;
+					updateOutput();
 
 				}
 
@@ -1163,97 +1125,96 @@
                 augmentaFolder.add( augmentaController, 'enableDebugMode', false).onChange( debugModeChanger );
 
 
-				//////// FUSION OUTPUT SIZE ///////// 
+				//////// VIDEO OUTPUT ////////
 
-				const fusionOutputFolder = gui.addFolder('Fusion output');
+				const videoOutputFolder = gui.addFolder('Video Output');
 
-				const fusionOutputController = {
-					fusionPresets: true,
-					offsetX: 0,
-					offsetY: 0,
-					autoComputeOffset: true
-				};
-
-                // Enable or disable fusion presets for output video
-                const fusionPresets = function () {
-
-					if (isConnected) {
-
-						useFusionPresets = fusionOutputController.fusionPresets;
-
-						if (useFusionPresets) {
-							// Update Size
-							sceneWidth = augmentaManager.fusion.videoOutInPixels.x;
-							sceneHeight = augmentaManager.fusion.videoOutInPixels.y;
-
-							sceneOffsetX = fusionOutputController.offsetX;
-							sceneOffsetY = fusionOutputController.offsetY;
-
-							manualMode = false;
-						} 
-					}
-					updateScene();
-				}
-
-				const changeFusionOffset = function() {
-
-					// Update Offset
-					if (useFusionPresets) {
-						sceneOffsetX = fusionOutputController.offsetX;
-						sceneOffsetY = fusionOutputController.offsetY;
-					}
-
-					updateScene();
-				}
-
-				const computeOffset = function() {
-
-					autoComputeOffset = fusionOutputController.autoComputeOffset;
-
-					updateScene();
-				}
-
-				fusionOutputFolder.add( fusionOutputController, 'fusionPresets', true).onChange( fusionPresets );
-				fusionOutputFolder.add( fusionOutputController, 'autoComputeOffset', true).onChange( computeOffset );
-				fusionOutputFolder.add( fusionOutputController, 'offsetX', 0).onChange( changeFusionOffset );
-				fusionOutputFolder.add( fusionOutputController, 'offsetY', 0).onChange( changeFusionOffset );
-
-                //////// CUSTOM OUTPUT SIZE ///////// 
-
-                const customOutputFolder = gui.addFolder('Custom output');
-
-				const customOutputController = {
-                    manualOutput: false,
-					offsetX: 0,
-					offsetY: 0,
+				const videoOutputController = {
 					width: window.innerWidth,
 					height: window.innerHeight,
-				};
+					offsetX: 0,
+					offsetY: 0,
+					presets: 'Fit to fusion output',
+					center: true
+				}
 
-                const manualModeChanger = function () 
-                {
-                    manualMode = customOutputController.manualOutput;
-					
-					if(manualMode && !useFusionPresets) {
-						sceneWidth = customOutputController.width;
-						sceneHeight = customOutputController.height;
+				function updateOutput() {
 
-						sceneOffsetX = customOutputController.offsetX;
-                    	sceneOffsetY = window.innerHeight - customOutputController.offsetY - sceneHeight;
+					// update output mode
+					let outputPresets = videoOutputController.presets;
+					autoComputeOffset = videoOutputController.center;
+
+					if (outputPresets == 'Fit to fusion output'){
+						fitToWindow = false;
+						useFusionPresets = true;
+						manualMode = false;
 					}
-					updateScene()
-                }
+					else if (outputPresets == 'Fit to window') {
+						fitToWindow = true;
+						useFusionPresets = false;
+						manualMode = false;
+					}
+					else {
+						fitToWindow = false;
+						useFusionPresets = false;
+						manualMode = true;
+					}
 
-                customOutputFolder.add( customOutputController, 'manualOutput', false).onChange( manualModeChanger );
-                customOutputFolder.add( customOutputController, 'offsetX', 0).onChange( manualModeChanger );
-                customOutputFolder.add( customOutputController, 'offsetY', 0).onChange( manualModeChanger );
-                customOutputFolder.add( customOutputController, 'width', 0).onChange( manualModeChanger );
-                customOutputFolder.add( customOutputController, 'height', 0).onChange( manualModeChanger );
+					// update output size
+					if (useFusionPresets) {
+						sceneWidth = augmentaManager.fusion.videoOutInPixels.x;
+						sceneHeight = augmentaManager.fusion.videoOutInPixels.y;
+					} else if (fitToWindow) {
+						sceneWidth = window.innerWidth;
+						sceneHeight = window.innerHeight;
+					} else {
+						sceneWidth = videoOutputController.width;
+						sceneHeight = videoOutputController.height;
+					}
+
+					// update output offset
+					if (autoComputeOffset) {
+						sceneOffsetX = (window.innerWidth - sceneWidth) / 2;
+						sceneOffsetY = (window.innerHeight - sceneHeight) / 2;
+					} else if (fitToWindow) {
+						sceneOffsetX = 0;
+						sceneOffsetY = 0;
+					} else {
+						sceneOffsetX = videoOutputController.offsetX;
+						sceneOffsetY = window.innerHeight - videoOutputController.offsetY - sceneHeight;
+					}
+
+					// update ui
+					if (useFusionPresets || fitToWindow) {
+						videoOutputController.width = sceneWidth;
+						videoOutputController.height = sceneHeight;
+						gui.updateDisplay();
+					}
+
+					if (autoComputeOffset) {
+						videoOutputController.offsetX = sceneOffsetX;
+						videoOutputController.offsetY = sceneOffsetY;
+						gui.updateDisplay();
+					}
+
+					// update scene
+					updateScene();
+
+				}
+
+				videoOutputFolder.add( videoOutputController, 'width', 0).onChange( updateOutput );
+				videoOutputFolder.add( videoOutputController, 'height', 0).onChange( updateOutput );
+				videoOutputFolder.add( videoOutputController, 'offsetX', 0).onChange( updateOutput );
+				videoOutputFolder.add( videoOutputController, 'offsetY', 0).onChange( updateOutput );
+				videoOutputFolder.add( videoOutputController, 'presets', ['Fit to fusion output', 'Fit to window', 'Custom size']).onChange( updateOutput );
+				videoOutputFolder.add( videoOutputController, 'center', true).onChange( updateOutput );
 
 				gui.close();
 
 				initBirds();
 			}
+
+			//////// RENDERER ////////
 
 			function initComputeRenderer() {
 
