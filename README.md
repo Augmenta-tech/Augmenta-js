@@ -4,7 +4,7 @@ A [Javascript](https://developer.mozilla.org/fr/docs/Web/JavaScript) library for
 
 ## Demo
 
-Try the live examples [here](https://augmenta-tech.github.io/Augmenta-js/)
+Try the live examples [here](http://augmenta-js.augmenta.tech/)
 
 ## Examples 
 
