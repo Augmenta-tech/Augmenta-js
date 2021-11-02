@@ -46,7 +46,8 @@ augmentaManager.changeIP(ip)
 ```javascript
 augmentaManager.websocketurl = websocketurl
 ```  
-With ```port``` a number or a string, ```ip``` a string and ```websocketurl``` a valid```javascript
+With ```port``` a number or a string, ```ip``` a string and ```websocketurl``` a string
+```javascript
 augmentaManager.useSecureConnection = true
 ```  
 Allows you to enable or disable secure conection (by default disablbed)
